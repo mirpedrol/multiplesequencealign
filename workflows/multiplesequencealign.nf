@@ -27,7 +27,6 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_mult
 // SUBWORKFLOW: Local subworkflows
 //
 include { STATS                  } from '../subworkflows/local/stats'
-include { ALIGN                  } from '../subworkflows/local/align'
 include { EVALUATE               } from '../subworkflows/local/evaluate'
 include { CREATE_TCOFFEETEMPLATE } from '../modules/local/create_tcoffee_template'
 
