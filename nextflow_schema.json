@@ -1,5 +1,5 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/nextflow_schema.json",
     "title": "nf-core/multiplesequencealign pipeline parameters",
     "description": "Pipeline to run and benchmark multiple sequence alignment tools.",
@@ -54,6 +54,27 @@
                 }
             }
         },
+        "tool_selectors": {
+            "title": "Tool selectors",
+            "type": "object",
+            "description": "Parameters to select which tools to use",
+            "default": "",
+            "fa_icon": "fas fa-tools",
+            "properties": {
+                "aligner": {
+                    "type": "string",
+                    "description": "Which aligner tool to use"
+                },
+                "guidetree": {
+                    "type": "string",
+                    "description": "Which aligner tool to use to generate a guide tree"
+                },
+                "treealign": {
+                    "type": "string",
+                    "description": "Which aligner tool to use to align providing a generated guide tree"
+                }
+            }
+        },
         "stats_options": {
             "title": "Stats options",
             "type": "object",
@@ -73,7 +94,8 @@
                 "calc_seq_stats": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Calculate general statistics on input files."
+                    "description": "Calculate general statistics on input files.",
+                    "default": true
                 },
                 "extract_plddt": {
                     "type": "boolean",
@@ -83,7 +105,8 @@
                 "calc_gaps": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Extract total number of gaps and average number of gaps of the alignment."
+                    "description": "Extract total number of gaps and average number of gaps of the alignment.",
+                    "default": true
                 }
             }
         },
@@ -101,12 +124,14 @@
                 "calc_sp": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Calculate the Sum of Pairs of alignment."
+                    "description": "Calculate the Sum of Pairs of alignment.",
+                    "default": true
                 },
                 "calc_tc": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Calculate the Total Column Score of alignment."
+                    "description": "Calculate the Total Column Score of alignment.",
+                    "default": true
                 },
                 "calc_irmsd": {
                     "type": "boolean",
@@ -144,7 +169,8 @@
                 },
                 "shiny_trace_mode": {
                     "type": "string",
-                    "description": "variable containing the shiny_trace mode to be used."
+                    "description": "variable containing the shiny_trace mode to be used.",
+                    "default": "latest"
                 }
             }
         },
@@ -365,6 +391,9 @@
     "allOf": [
         {
             "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/tool_selectors"
         },
         {
             "$ref": "#/definitions/stats_options"

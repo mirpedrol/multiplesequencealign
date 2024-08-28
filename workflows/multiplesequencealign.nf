@@ -52,6 +52,16 @@ include { PIGZ_COMPRESS                  } from '../modules/nf-core/pigz/compres
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT CLASS-MODULES MODULES/SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+include { MSA_ALIGNMENT } from '../subworkflows/mirpedrol/msa_alignment/main'
+include { MSA_GUIDETREE } from '../subworkflows/mirpedrol/msa_guidetree/main'
+include { MSA_TREEALIGN } from '../subworkflows/mirpedrol/msa_treealign/main'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -168,28 +178,44 @@ workflow MULTIPLESEQUENCEALIGN {
         stats_summary = stats_summary.mix(STATS.out.stats_summary)
     }
 
-    //
-    // Align
-    //
-    compress_during_align = !params.skip_compression && params.skip_eval
-    ALIGN (
-        ch_seqs,
-        ch_tools,
-        ch_structures_template,
-        compress_during_align
-    )
-    ch_versions = ch_versions.mix(ALIGN.out.versions)
+    msa_alignment = Channel.empty()
 
-    if (!params.skip_compression && !compress_during_align) {
-        PIGZ_COMPRESS (ALIGN.out.msa)
-        ch_versions = ch_versions.mix(PIGZ_COMPRESS.out.versions)
+    if (params.guidetree && params.treealign) {
+        //
+        // Compute tree
+        //
+        MSA_GUIDETREE (
+            ch_seqs
+        )
+        ch_versions = ch_versions.mix(MSA_GUIDETREE.out.versions)
+
+        //
+        // Align with a given tree
+        //
+        MSA_TREEALIGN (
+            ch_seqs,
+            MSA_GUIDETREE.out.guidetree
+        )
+        ch_versions = ch_versions.mix(MSA_TREEALIGN.out.versions)
+        msa_alignment.mix(MSA_TREEALIGN.out.alignment)
+    }
+
+    if (params.aligner) {
+        //
+        // Align
+        //
+        MSA_ALIGNMENT (
+            ch_seqs
+        )
+        ch_versions = ch_versions.mix(MSA_ALIGNMENT.out.versions)
+        msa_alignment.mix(MSA_ALIGNMENT.out.alignment)
     }
 
     //
     // Evaluate the quality of the alignment
     //
     if (!params.skip_eval) {
-        EVALUATE (ALIGN.out.msa, ch_refs, ch_structures_template)
+        EVALUATE (msa_alignment, ch_refs, ch_structures_template)
         ch_versions        = ch_versions.mix(EVALUATE.out.versions)
         evaluation_summary = evaluation_summary.mix(EVALUATE.out.eval_summary)
     }
