@@ -18,6 +18,7 @@ nextflow.enable.dsl = 2
 */
 
 include { MULTIPLESEQUENCEALIGN   } from './workflows/multiplesequencealign'
+include { EVALUATEMSA             } from './workflows/evaluatemsa'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_multiplesequencealign_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_multiplesequencealign_pipeline'
 
@@ -52,6 +53,29 @@ workflow NFCORE_MULTIPLESEQUENCEALIGN {
     multiqc_report =  MULTIPLESEQUENCEALIGN.out.multiqc
 
 }
+
+workflow NFCORE_EVALUATEMSA {
+
+    take:
+    msa_alignment          // channel: [ meta, /path/to/file.aln ]
+    ch_refs                // channel: [ meta, /path/to/file.aln ]
+    ch_structures_template // channel: [ meta, /path/to/file.pdb ]
+    stats_summary          // channel: [ meta, /path/to/file.csv ]
+
+    main:
+    ch_versions = Channel.empty()
+
+    //
+    // WORKFLOW: Run evaluation pipelines
+    //
+    EVALUATEMSA (
+        msa_alignment,
+        ch_refs,
+        ch_structures_template,
+        stats_summary,
+        ch_versions
+    )
+}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -76,13 +100,23 @@ workflow {
         params.tools
     )
 
-    //
-    // WORKFLOW: Run main workflow
-    //
-    NFCORE_MULTIPLESEQUENCEALIGN (
-        PIPELINE_INITIALISATION.out.samplesheet,
-        PIPELINE_INITIALISATION.out.tools
-    )
+    if (params.evaluate) {
+        // WORKFLOW: Run evaluation workflow
+        NFCORE_EVALUATEMSA (
+            PIPELINE_INITIALISATION.out.msa_alignment,
+            PIPELINE_INITIALISATION.out.ch_refs,
+            PIPELINE_INITIALISATION.out.ch_structures_template,
+            PIPELINE_INITIALISATION.out.stats_summary
+        )
+    } else {
+        //
+        // WORKFLOW: Run main workflow
+        //
+        NFCORE_MULTIPLESEQUENCEALIGN (
+            PIPELINE_INITIALISATION.out.samplesheet,
+            PIPELINE_INITIALISATION.out.tools
+        )
+    }
 
     //
     // SUBWORKFLOW: Run completion tasks

@@ -27,14 +27,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_mult
 // SUBWORKFLOW: Local subworkflows
 //
 include { STATS                  } from '../subworkflows/local/stats'
-include { EVALUATE               } from '../subworkflows/local/evaluate'
 include { CREATE_TCOFFEETEMPLATE } from '../modules/local/create_tcoffee_template'
-
-//
-// MODULE: local modules
-//
-include { PREPARE_MULTIQC } from '../modules/local/prepare_multiqc'
-include { PREPARE_SHINY   } from '../modules/local/prepare_shiny'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -74,10 +67,7 @@ workflow MULTIPLESEQUENCEALIGN {
 
     main:
     ch_multiqc_files             = Channel.empty()
-    ch_multiqc_table             = Channel.empty()
-    evaluation_summary           = Channel.empty()
     stats_summary                = Channel.empty()
-    stats_and_evaluation_summary = Channel.empty()
     ch_shiny_stats               = Channel.empty()
 
     ch_input
@@ -210,43 +200,6 @@ workflow MULTIPLESEQUENCEALIGN {
         msa_alignment.mix(MSA_ALIGNMENT.out.alignment)
     }
 
-    //
-    // Evaluate the quality of the alignment
-    //
-    if (!params.skip_eval) {
-        EVALUATE (msa_alignment, ch_refs, ch_structures_template)
-        ch_versions        = ch_versions.mix(EVALUATE.out.versions)
-        evaluation_summary = evaluation_summary.mix(EVALUATE.out.eval_summary)
-    }
-
-    //
-    // Combine stats and evaluation reports into a single CSV
-    //
-    if (!params.skip_stats || !params.skip_eval) {
-        stats_summary_csv = stats_summary.map{ meta, csv -> csv }
-        eval_summary_csv  = evaluation_summary.map{ meta, csv -> csv }
-        stats_summary_csv.mix(eval_summary_csv)
-                        .collect()
-                        .map {
-                            csvs ->
-                                [ [ id:"summary_stats_eval" ], csvs ]
-                        }
-                        .set { stats_and_evaluation }
-        MERGE_STATS_EVAL (stats_and_evaluation)
-        stats_and_evaluation_summary = MERGE_STATS_EVAL.out.csv
-        ch_versions                  = ch_versions.mix(MERGE_STATS_EVAL.out.versions)
-    }
-
-    //
-    // MODULE: Shiny
-    //
-    if (!params.skip_shiny) {
-        shiny_app = Channel.fromPath(params.shiny_app)
-        PREPARE_SHINY (stats_and_evaluation_summary, shiny_app)
-        ch_shiny_stats = PREPARE_SHINY.out.data.toList()
-        ch_versions = ch_versions.mix(PREPARE_SHINY.out.versions)
-    }
-
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -272,15 +225,12 @@ workflow MULTIPLESEQUENCEALIGN {
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
 
-        PREPARE_MULTIQC (stats_and_evaluation_summary)
-        ch_multiqc_table = ch_multiqc_table.mix(PREPARE_MULTIQC.out.multiqc_table.collect{it[1]}.ifEmpty([]))
-
         MULTIQC (
             ch_multiqc_files.collect(),
             ch_multiqc_config.toList(),
             ch_multiqc_custom_config.toList(),
             ch_multiqc_logo.toList(),
-            ch_multiqc_table
+            []
         )
         multiqc_out = MULTIQC.out.report.toList()
     }
