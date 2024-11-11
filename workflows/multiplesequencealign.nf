@@ -62,13 +62,11 @@ workflow MULTIPLESEQUENCEALIGN {
 
     take:
     ch_input    // channel: [ meta, path(sequence.fasta), path(reference.fasta), path(pdb_structures.tar.gz), path(templates.txt) ]
-    ch_tools    // channel: [ val(guide_tree_tool), val(args_guide_tree_tool), val(alignment_tool), val(args_alignment_tool) ]
     ch_versions // channel: [ path(versions.yml) ]
 
     main:
-    ch_multiqc_files             = Channel.empty()
-    stats_summary                = Channel.empty()
-    ch_shiny_stats               = Channel.empty()
+    def ch_multiqc_files             = Channel.empty()
+    def stats_summary                = Channel.empty()
 
     ch_input
         .map {
@@ -78,7 +76,7 @@ workflow MULTIPLESEQUENCEALIGN {
         .set { ch_seqs }
 
     ch_input
-        .filter { it[2].size() > 0}
+        .filter { input -> input[2].size() > 0}
         .map {
             meta, fasta, ref, str, template ->
                 [ meta, file(ref) ]
@@ -86,7 +84,7 @@ workflow MULTIPLESEQUENCEALIGN {
         .set { ch_refs }
 
     ch_input
-        .filter { it[4].size() > 0}
+        .filter { input -> input[4].size() > 0}
         .map {
             meta, fasta, ref, str, template ->
                 [ meta, file(template) ]
@@ -98,7 +96,7 @@ workflow MULTIPLESEQUENCEALIGN {
             meta, fasta, ref, str, template ->
                 [ meta, str ]
         }
-        .filter { it[1].size() > 0 }
+        .filter { input -> input[1].size() > 0 }
         .set { ch_structures }
 
     // ----------------
@@ -107,8 +105,8 @@ workflow MULTIPLESEQUENCEALIGN {
     // Structures are taken from a directory of PDB files.
     // If the directory is compressed, it is uncompressed first.
     ch_structures
-        .branch {
-            compressed:   it[1].endsWith('.tar.gz')
+        .branch { structures ->
+            compressed:   structures[1].endsWith('.tar.gz')
             uncompressed: true
         }
         .set { ch_structures }
@@ -126,9 +124,11 @@ workflow MULTIPLESEQUENCEALIGN {
     // TEMPLATES
     // ----------------
     // If a family does not present a template but structures are provided, create one.
-    ch_structures_template = ch_structures.join(ch_templates, by:0, remainder:true)
+    ch_structures
+        .join(ch_templates, by:0, remainder:true)
+        .set { ch_structures_template }
     ch_structures_template
-        .branch {
+        .branch { it ->
             template: it[2] != null
             no_template: true
         }
@@ -142,7 +142,7 @@ workflow MULTIPLESEQUENCEALIGN {
                     [ meta, structures ]
             }
     )
-    new_templates = CREATE_TCOFFEETEMPLATE.out.template
+    def new_templates = CREATE_TCOFFEETEMPLATE.out.template
     ch_structures_branched.template
         .map {
             meta,structures,template ->
@@ -150,7 +150,7 @@ workflow MULTIPLESEQUENCEALIGN {
         }
         .set { forced_templates }
 
-    ch_templates_merged = forced_templates.mix(new_templates)
+    def ch_templates_merged = forced_templates.mix(new_templates)
 
     // Merge the structures and templates channels, ready for the alignment
     ch_structures_template = ch_templates_merged.combine(ch_structures, by:0)
@@ -167,7 +167,7 @@ workflow MULTIPLESEQUENCEALIGN {
         stats_summary = stats_summary.mix(STATS.out.stats_summary)
     }
 
-    msa_alignment = Channel.empty()
+    def msa_alignment = Channel.empty()
 
     if (params.guidetree && params.treealign) {
         //
@@ -178,18 +178,29 @@ workflow MULTIPLESEQUENCEALIGN {
         )
         ch_versions = ch_versions.mix(MSA_GUIDETREE.out.versions)
 
+        // Prepare channels for treealign to make sure the correct tree is used for the respective alignment
+        ch_seqs
+            .combine(MSA_GUIDETREE.out.tree, by:0)
+            .set { ch_seqs_trees }
+        ch_seqs_trees
+            .multiMap { meta, seq, tree ->
+                sequences: [meta, seq]
+                trees: [meta, tree]
+            }
+            .set { ch_seqs_trees_multi }
+
         //
         // Align with a given tree
         //
         MSA_TREEALIGN (
-            ch_seqs,
-            MSA_GUIDETREE.out.guidetree
+            ch_seqs_trees_multi.sequences,
+            ch_seqs_trees_multi.trees
         )
         ch_versions = ch_versions.mix(MSA_TREEALIGN.out.versions)
         msa_alignment.mix(MSA_TREEALIGN.out.alignment)
     }
 
-    if (params.aligner) {
+    if (params.alignment) {
         //
         // Align
         //
@@ -211,16 +222,16 @@ workflow MULTIPLESEQUENCEALIGN {
     //
     // MODULE: MultiQC
     //
-    multiqc_out = Channel.empty()
+    def multiqc_out = Channel.empty()
     if (!params.skip_multiqc && (!params.skip_stats || !params.skip_eval)) {
 
-        ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-        ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
-        ch_multiqc_logo                       = params.multiqc_logo ? Channel.fromPath(params.multiqc_logo, checkIfExists: true) : Channel.empty()
-        summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
-        ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
-        ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
-        ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
+        def ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+        def ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
+        def ch_multiqc_logo                       = params.multiqc_logo ? Channel.fromPath(params.multiqc_logo, checkIfExists: true) : Channel.empty()
+        def summary_params                        = paramsSummaryMap(workflow, parameters_schema: "nextflow_schema.json")
+        def ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
+        def ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+        def ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
         ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))

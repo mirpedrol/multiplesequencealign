@@ -35,17 +35,15 @@ workflow NFCORE_MULTIPLESEQUENCEALIGN {
 
     take:
     samplesheet // channel: samplesheet read in from --input
-    tools       // channel: toolsheet read in from --tools
 
     main:
-    ch_versions = Channel.empty()
+    def ch_versions = Channel.empty()
 
     //
     // WORKFLOW: Run pipeline
     //
     MULTIPLESEQUENCEALIGN (
         samplesheet,
-        tools,
         ch_versions
     )
 
@@ -63,7 +61,7 @@ workflow NFCORE_EVALUATEMSA {
     stats_summary          // channel: [ meta, /path/to/file.csv ]
 
     main:
-    ch_versions = Channel.empty()
+    def ch_versions = Channel.empty()
 
     //
     // WORKFLOW: Run evaluation pipelines
@@ -114,7 +112,6 @@ workflow {
         //
         NFCORE_MULTIPLESEQUENCEALIGN (
             PIPELINE_INITIALISATION.out.samplesheet,
-            PIPELINE_INITIALISATION.out.tools
         )
     }
 
@@ -131,7 +128,8 @@ workflow {
         NFCORE_MULTIPLESEQUENCEALIGN.out.multiqc_report,
         "${params.outdir}/shiny_app",
         "${params.outdir}/pipeline_info",
-        params.shiny_trace_mode
+        params.shiny_trace_mode,
+        params.evaluate
     )
 }
 

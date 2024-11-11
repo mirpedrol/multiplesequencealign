@@ -121,6 +121,7 @@ workflow PIPELINE_COMPLETION {
     shiny_dir_path   //  string: Path to shiny stats file
     trace_dir_path   //  string: Path to trace file
     shiny_trace_mode // string: Mode to use for shiny trace file (default: "latest", options: "latest", "all")
+    evaluate         // boolean: Evaluate the results
 
     main:
 
@@ -140,7 +141,7 @@ workflow PIPELINE_COMPLETION {
             imNotification(summary_params, hook_url)
         }
 
-        if (shiny_trace_mode) {
+        if (shiny_trace_mode && evaluate) {
             getTraceForShiny(trace_dir_path, shiny_dir_path, shiny_trace_mode)
         }
 
