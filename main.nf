@@ -95,7 +95,6 @@ workflow {
         args,
         params.outdir,
         params.input,
-        params.tools
     )
 
     if (params.evaluate) {

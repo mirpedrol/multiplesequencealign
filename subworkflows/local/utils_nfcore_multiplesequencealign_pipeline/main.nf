@@ -36,7 +36,6 @@ workflow PIPELINE_INITIALISATION {
     nextflow_cli_args //  array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
     input             //  string: Path to input samplesheet
-    tools             //  string: Path to input tools samplesheet
 
     main:
 
@@ -78,27 +77,9 @@ workflow PIPELINE_INITIALISATION {
     // Create channel from input file provided through params.input
     //
     ch_input = Channel.fromSamplesheet('input')
-    ch_tools = Channel.fromSamplesheet('tools')
-                .map {
-                    meta ->
-                        def meta_clone = meta[0].clone()
-                        def tree_map = [:]
-                        def align_map = [:]
-
-                        tree_map["tree"] = meta_clone["tree"]
-                        tree_map["args_tree"] = meta_clone["args_tree"]
-                        tree_map["args_tree_clean"] = Utils.cleanArgs(meta_clone.args_tree)
-
-                        align_map["aligner"] = meta_clone["aligner"]
-                        align_map["args_aligner"] = Utils.check_required_args(meta_clone["aligner"], meta_clone["args_aligner"])
-                        align_map["args_aligner_clean"] = Utils.cleanArgs(align_map["args_aligner"])
-
-                        [ tree_map, align_map ]
-                }.unique()
 
     emit:
     samplesheet = ch_input
-    tools       = ch_tools
     versions    = ch_versions
 }
 

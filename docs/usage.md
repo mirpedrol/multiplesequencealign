@@ -116,48 +116,12 @@ Each row represents a set of sequences (in this case the seatoxin and toxin prot
 > [!NOTE]
 > You can have some samples with structures and/or references and some without. The pipeline will run the modules requiring structures/references only on the samples for which you have provided the required information and the others will be just skipped.
 
-## Toolsheet input
-
-We provide a toolsheet as input to facilitate testing multiple arguments per tool when using the pipeline as a benchmarking framework. This, enables having multiple entries in the toolsheet, each corresponding to different arguments to be tested for the same tool.
-
-Each line of the toolsheet defines a combination of guide tree and multiple sequence aligner to run with the respective arguments to be used.
-
-A typical toolsheet should look at follows:
-
-```csv title="toolsheet.csv"
-tree,args_tree,aligner,args_aligner,
-FAMSA, -gt upgma -medoidtree, FAMSA,
-, ,TCOFFEE,
-FAMSA,,REGRESSIVE,
-```
-
-> [!NOTE]
-> Each of the trees and aligners are available as standalones. You can leave `args_tree` and `args_aligner` empty if you are cool with the default settings of each method. Alternatively, you can leave `args_tree` empty to use the default guide tree with each aligner.
-
-> [!NOTE]
-> use the exact spelling as listed above in [align](#3-align) and [guide trees](#2-guide-trees)!
-
-`tree` is the tool used to build the tree (optional).
-
-Arguments to the tree tool can be provided using `args_tree`. Please refer to each tool's documentation (optional).
-
-The `aligner` column contains the tool to run the alignment (optional).
-
-Finally, the arguments to the aligner tool can be set by using the `args_aligner` column (optional).
-
-| Column         | Description                                                                      |
-| -------------- | -------------------------------------------------------------------------------- |
-| `tree`         | Optional. Tool used to build the tree.                                           |
-| `args_tree`    | Optional. Arguments to the tree tool. Please refer to each tool's documentation. |
-| `aligner`      | Required. Tool to run the alignment. Available options listed above.             |
-| `args_aligner` | Optional. Arguments to the alignment tool.                                       |
-
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run nf-core/multiplesequencealign --input ./samplesheet.csv --tools ./toolsheet.csv --outdir ./results -profile docker
+nextflow run nf-core/multiplesequencealign --input ./samplesheet.csv --outdir ./results -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -189,7 +153,6 @@ with `params.yaml` containing:
 
 ```yaml
 input: './samplesheet.csv'
-tools: "./toolsheet.csv"
 outdir: './results/'
 <...>
 ```
