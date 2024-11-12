@@ -64,6 +64,30 @@
                 }
             }
         },
+        "tool_arguments": {
+            "title": "Tool arguments",
+            "type": "object",
+            "description": "Parameters to provide arguments for the selected tools to use",
+            "default": "",
+            "fa_icon": "fas fa-tools",
+            "properties": {
+                "alignment_args": {
+                    "type": "string",
+                    "description": "Arguments to use for the selected alignment tool.",
+                    "help": "If the provided arguments contain a double dash, make sure to provide them with an assignment operator, e.g. `--alignment_args='--arg1 --arg2'`."
+                },
+                "guidetree_args": {
+                    "type": "string",
+                    "description": "Arguments to use for the selected guidetree tool.",
+                    "help": "If the provided arguments contain a double dash, make sure to provide them with an assignment operator, e.g. `--guidetree_args='--arg1 --arg2'`."
+                },
+                "treealign_args": {
+                    "type": "string",
+                    "description": "Arguments to use for the selected treealign tool.",
+                    "help": "If the provided arguments contain a double dash, make sure to provide them with an assignment operator, e.g. `--treealign_args='--arg1 --arg2'`."
+                }
+            }
+        }
         "stats_options": {
             "title": "Stats options",
             "type": "object",
