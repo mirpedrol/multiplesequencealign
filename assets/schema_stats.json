@@ -13,20 +13,13 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
-            "msa": {
+            "stats": {
                 "type": "file",
-                "pattern": "^\\S+\\.aln$",
-                "description": "aln file containing the MSA",
-                "errorMessage": "Must end with .aln"
-            },
-            "reference": {
-                "type": "file"
-            },
-            "structures": {
-                "type": "file"
+                "pattern": "^\\S+\\.csv$",
+                "description": "dsv file containing the stats of the input sequences.",
+                "errorMessage": "Must end with .csv"
             }
         },
-        "required": ["id"],
-        "anyOf": [{ "required": ["msa"] }, { "required": ["structures"] }]
+        "required": ["id", "stats"]
     }
 }

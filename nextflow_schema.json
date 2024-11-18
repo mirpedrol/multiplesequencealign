@@ -1,10 +1,10 @@
 {
-    "$schema": "https://json-schema.org/draft-07/schema",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/nextflow_schema.json",
     "title": "nf-core/multiplesequencealign pipeline parameters",
     "description": "Pipeline to run and benchmark multiple sequence alignment tools.",
     "type": "object",
-    "definitions": {
+    "$defs": {
         "input_output_options": {
             "title": "Input/output options",
             "type": "object",
@@ -22,6 +22,23 @@
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/multiplesequencealign/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
+                },
+                "tools": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/csv",
+                    "schema": "assets/schema_tools.json",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to comma-separated file containing information about the tools to be used in the experiment.",
+                    "help_text": "You will need to create a design file with information about the tools to be used before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/msa/usage#samplesheet-input).",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "templates_suffix": {
+                    "type": "string",
+                    "description": "Suffix of the dependencies templates.",
+                    "help_text": "Suffix of the files in the accessory files directory (e.g. pdb for pdb files).",
+                    "fa_icon": "fas fa-file-signature"
                 },
                 "outdir": {
                     "type": "string",
@@ -43,48 +60,47 @@
                 }
             }
         },
-        "tool_selectors": {
-            "title": "Tool selectors",
+        "reference_genome_options": {
+            "title": "Reference genome options",
             "type": "object",
-            "description": "Parameters to select which tools to use",
-            "default": "",
-            "fa_icon": "fas fa-tools",
+            "fa_icon": "fas fa-dna",
+            "description": "Reference genome related files and options required for the workflow.",
             "properties": {
-                "alignment": {
+                "genome": {
                     "type": "string",
-                    "description": "Which aligner tool to use"
+                    "description": "Name of iGenomes reference.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
                 },
-                "guidetree": {
+                "fasta": {
                     "type": "string",
-                    "description": "Which aligner tool to use to generate a guide tree"
+                    "format": "file-path",
+                    "exists": true,
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to FASTA genome file.",
+                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
+                    "fa_icon": "far fa-file-code"
                 },
-                "treealign": {
-                    "type": "string",
-                    "description": "Which aligner tool to use to align providing a generated guide tree"
+                "igenomes_ignore": {
+                    "type": "boolean",
+                    "description": "Do not load the iGenomes reference config.",
+                    "fa_icon": "fas fa-ban",
+                    "hidden": true,
+                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
                 }
             }
         },
-        "tool_arguments": {
-            "title": "Tool arguments",
+        "align_options": {
+            "title": "Stats options",
             "type": "object",
-            "description": "Parameters to provide arguments for the selected tools to use",
-            "default": "",
-            "fa_icon": "fas fa-tools",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define extra alignment options.",
             "properties": {
-                "alignment_args": {
-                    "type": "string",
-                    "description": "Arguments to use for the selected alignment tool.",
-                    "help": "If the provided arguments contain a double dash, make sure to provide them with an assignment operator, e.g. `--alignment_args='--arg1 --arg2'`."
-                },
-                "guidetree_args": {
-                    "type": "string",
-                    "description": "Arguments to use for the selected guidetree tool.",
-                    "help": "If the provided arguments contain a double dash, make sure to provide them with an assignment operator, e.g. `--guidetree_args='--arg1 --arg2'`."
-                },
-                "treealign_args": {
-                    "type": "string",
-                    "description": "Arguments to use for the selected treealign tool.",
-                    "help": "If the provided arguments contain a double dash, make sure to provide them with an assignment operator, e.g. `--treealign_args='--arg1 --arg2'`."
+                "build_consensus": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-fast-forward",
+                    "description": "Build consensus alignment with M-COFFEE."
                 }
             }
         },
@@ -107,8 +123,7 @@
                 "calc_seq_stats": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Calculate general statistics on input files.",
-                    "default": true
+                    "description": "Calculate general statistics on input files."
                 },
                 "extract_plddt": {
                     "type": "boolean",
@@ -118,8 +133,7 @@
                 "calc_gaps": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Extract total number of gaps and average number of gaps of the alignment.",
-                    "default": true
+                    "description": "Extract total number of gaps and average number of gaps of the alignment."
                 }
             }
         },
@@ -129,11 +143,6 @@
             "fa_icon": "fas fa-terminal",
             "description": "Define wether to run stats.",
             "properties": {
-                "evaluate": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-magnifying-glass",
-                    "description": "Run the evaluations computation on the msa."
-                },
                 "skip_eval": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
@@ -142,14 +151,12 @@
                 "calc_sp": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Calculate the Sum of Pairs of alignment.",
-                    "default": true
+                    "description": "Calculate the Sum of Pairs of alignment."
                 },
                 "calc_tc": {
                     "type": "boolean",
                     "fa_icon": "fas fa-fast-forward",
-                    "description": "Calculate the Total Column Score of alignment.",
-                    "default": true
+                    "description": "Calculate the Total Column Score of alignment."
                 },
                 "calc_irmsd": {
                     "type": "boolean",
@@ -187,8 +194,7 @@
                 },
                 "shiny_trace_mode": {
                     "type": "string",
-                    "description": "variable containing the shiny_trace mode to be used.",
-                    "default": "latest"
+                    "description": "variable containing the shiny_trace mode to be used."
                 }
             }
         },
@@ -252,41 +258,6 @@
                 }
             }
         },
-        "max_job_request_options": {
-            "title": "Max job request options",
-            "type": "object",
-            "fa_icon": "fab fa-acquisitions-incorporated",
-            "description": "Set the top limit for requested resources for any single job.",
-            "help_text": "If you are running on a smaller system, a pipeline step requesting more resources than are available may cause the Nextflow to stop the run with an error. These options allow you to cap the maximum resources requested by any single job so that the pipeline will run on your system.\n\nNote that you can not _increase_ the resources requested by any job using these options. For that you will need your own configuration file. See [the nf-core website](https://nf-co.re/usage/configuration) for details.",
-            "properties": {
-                "max_cpus": {
-                    "type": "integer",
-                    "description": "Maximum number of CPUs that can be requested for any single job.",
-                    "default": 16,
-                    "fa_icon": "fas fa-microchip",
-                    "hidden": true,
-                    "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
-                },
-                "max_memory": {
-                    "type": "string",
-                    "description": "Maximum amount of memory that can be requested for any single job.",
-                    "default": "128.GB",
-                    "fa_icon": "fas fa-memory",
-                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
-                    "hidden": true,
-                    "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
-                },
-                "max_time": {
-                    "type": "string",
-                    "description": "Maximum amount of time that can be requested for any single job.",
-                    "default": "240.h",
-                    "fa_icon": "far fa-clock",
-                    "pattern": "^(\\d+\\.?\\s*(s|m|h|d|day)\\s*)+$",
-                    "hidden": true,
-                    "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
-                }
-            }
-        },
         "generic_options": {
             "title": "Generic options",
             "type": "object",
@@ -294,12 +265,6 @@
             "description": "Less common options for the pipeline, typically set in a config file.",
             "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
             "properties": {
-                "help": {
-                    "type": "boolean",
-                    "description": "Display help text.",
-                    "fa_icon": "fas fa-question-circle",
-                    "hidden": true
-                },
                 "version": {
                     "type": "boolean",
                     "description": "Display version and exit.",
@@ -375,27 +340,6 @@
                     "fa_icon": "fas fa-check-square",
                     "hidden": true
                 },
-                "validationShowHiddenParams": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-eye-slash",
-                    "description": "Show all params when using `--help`",
-                    "hidden": true,
-                    "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
-                },
-                "validationFailUnrecognisedParams": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-check-circle",
-                    "description": "Validation of parameters fails when an unrecognised parameter is found.",
-                    "hidden": true,
-                    "help_text": "By default, when an unrecognised parameter is found, it returns a warinig."
-                },
-                "validationLenientMode": {
-                    "type": "boolean",
-                    "fa_icon": "far fa-check-circle",
-                    "description": "Validation of parameters in lenient more.",
-                    "hidden": true,
-                    "help_text": "Allows string values that are parseable as numbers or booleans. For further information see [JSONSchema docs](https://github.com/everit-org/json-schema#lenient-mode)."
-                },
                 "pipelines_testdata_base_path": {
                     "type": "string",
                     "fa_icon": "far fa-check-circle",
@@ -408,31 +352,31 @@
     },
     "allOf": [
         {
-            "$ref": "#/definitions/input_output_options"
+            "$ref": "#/$defs/input_output_options"
         },
         {
-            "$ref": "#/definitions/tool_selectors"
+            "$ref": "#/$defs/align_options"
         },
         {
-            "$ref": "#/definitions/stats_options"
+            "$ref": "#/$defs/stats_options"
         },
         {
-            "$ref": "#/definitions/eval_options"
+            "$ref": "#/$defs/eval_options"
         },
         {
-            "$ref": "#/definitions/reports_options"
+            "$ref": "#/$defs/reports_options"
         },
         {
-            "$ref": "#/definitions/compression"
+            "$ref": "#/$defs/compression"
         },
         {
-            "$ref": "#/definitions/institutional_config_options"
+            "$ref": "#/$defs/reference_genome_options"
         },
         {
-            "$ref": "#/definitions/max_job_request_options"
+            "$ref": "#/$defs/institutional_config_options"
         },
         {
-            "$ref": "#/definitions/generic_options"
+            "$ref": "#/$defs/generic_options"
         }
     ]
 }

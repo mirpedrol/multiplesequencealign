@@ -4,6 +4,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
+include { samplesheetToList      } from 'plugin/nf-schema'
+
 workflow SAMPLESHEET_EVALUATION {
     take:
     ch_msa        // channel: [ meta, /path/to/file.aln ]
@@ -12,13 +14,24 @@ workflow SAMPLESHEET_EVALUATION {
     outdir        // params.outdir
 
     main:
-    def ch_list_for_samplesheet = ch_msa
+    // Try reading an existing samplesheet
+    def samplesheet = file("${outdir}/downstream_samplesheets/evaluation.csv")
+    def ch_existing_samplesheet = Channel.empty()
+    if (samplesheet.exists()) {
+        ch_existing_samplesheet = Channel.fromList(samplesheetToList(samplesheet, "${projectDir}/assets/schema_evaluate.json"))
+    }
+    // Create a channel with the new values for the samplesheet
+    def ch_info_for_samplesheet = ch_msa
         .join(ch_references, by: 0, remainder: true)
         .join(ch_structures, by: 0, remainder: true)
         .map { meta, msa, reference, structure ->
-            def sample    = meta.id
-            [id: sample, msa: msa, reference: reference, structure: structure]
+            [id: meta.id, msa: msa, reference: reference, structure: structure]
         }
+    // Join both channels
+    ch_existing_samplesheet
+        .mix(ch_info_for_samplesheet)
+        .unique()
+        .set { ch_list_for_samplesheet }
 
     channelToSamplesheet(ch_list_for_samplesheet, "${outdir}/downstream_samplesheets/evaluation")
 }
@@ -29,10 +42,22 @@ workflow SAMPLESHEET_STATS {
     outdir
 
     main:
-    def ch_list_for_samplesheet = stats_summary
+    // Try reading an existing samplesheet
+    def samplesheet = file("${outdir}/downstream_samplesheets/stats.csv")
+    def ch_existing_samplesheet = Channel.empty()
+    if (samplesheet.exists()) {
+        ch_existing_samplesheet = Channel.fromList(samplesheetToList(samplesheet, "${projectDir}/assets/schema_stats.json"))
+    }
+    // Create a channel with the new values for the samplesheet
+    def ch_info_for_samplesheet = stats_summary
         .map { meta, csv ->
-            [stats: csv]
+            [id: meta.id, stats: csv]
         }
+    // Join both channels
+    ch_existing_samplesheet
+        .mix(ch_info_for_samplesheet)
+        .unique()
+        .set { ch_list_for_samplesheet }
 
     channelToSamplesheet(ch_list_for_samplesheet, "${outdir}/downstream_samplesheets/stats")
 }
