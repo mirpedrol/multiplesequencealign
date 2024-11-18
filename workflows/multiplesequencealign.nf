@@ -26,8 +26,9 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_mult
 //
 // SUBWORKFLOW: Local subworkflows
 //
-include { STATS                  } from '../subworkflows/local/stats'
-include { CREATE_TCOFFEETEMPLATE } from '../modules/local/create_tcoffee_template'
+include { STATS                            } from '../subworkflows/local/stats'
+include { CREATE_TCOFFEETEMPLATE           } from '../modules/local/create_tcoffee_template'
+include { GENERATE_DOWNSTREAM_SAMPLESHEETS } from '../subworkflows/local/generate_downstream_samplesheet/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -39,7 +40,6 @@ include { CREATE_TCOFFEETEMPLATE } from '../modules/local/create_tcoffee_templat
 // MODULE: Installed directly from nf-core/modules
 //
 include { UNTAR                          } from '../modules/nf-core/untar/main'
-include { CSVTK_JOIN as MERGE_STATS_EVAL } from '../modules/nf-core/csvtk/join/main.nf'
 include { PIGZ_COMPRESS                  } from '../modules/nf-core/pigz/compress/main'
 
 /*
@@ -63,6 +63,7 @@ workflow MULTIPLESEQUENCEALIGN {
     take:
     ch_input    // channel: [ meta, path(sequence.fasta), path(reference.fasta), path(pdb_structures.tar.gz), path(templates.txt) ]
     ch_versions // channel: [ path(versions.yml) ]
+    outdir      // params.outdir
 
     main:
     def ch_multiqc_files             = Channel.empty()
@@ -197,7 +198,7 @@ workflow MULTIPLESEQUENCEALIGN {
             ch_seqs_trees_multi.trees
         )
         ch_versions = ch_versions.mix(MSA_TREEALIGN.out.versions)
-        msa_alignment.mix(MSA_TREEALIGN.out.alignment)
+        msa_alignment = msa_alignment.mix(MSA_TREEALIGN.out.alignment)
     }
 
     if (params.alignment) {
@@ -208,16 +209,27 @@ workflow MULTIPLESEQUENCEALIGN {
             ch_seqs
         )
         ch_versions = ch_versions.mix(MSA_ALIGNMENT.out.versions)
-        msa_alignment.mix(MSA_ALIGNMENT.out.alignment)
+        msa_alignment = msa_alignment.mix(MSA_ALIGNMENT.out.alignment)
     }
 
     softwareVersionsToYAML(ch_versions)
         .collectFile(
-            storeDir: "${params.outdir}/pipeline_info",
+            storeDir: "${outdir}/pipeline_info",
             name: 'nf_core_pipeline_software_mqc_versions.yml',
             sort: true,
             newLine: true
         ).set { ch_collated_versions }
+
+    //
+    // SUBWORKFLOW: Generate samplesheets for downstream workflows
+    //
+    GENERATE_DOWNSTREAM_SAMPLESHEETS (
+        msa_alignment,
+        ch_refs,
+        ch_structures,
+        stats_summary,
+        outdir
+    )
 
     //
     // MODULE: MultiQC
@@ -232,9 +244,9 @@ workflow MULTIPLESEQUENCEALIGN {
         def ch_workflow_summary                   = Channel.value(paramsSummaryMultiqc(summary_params))
         def ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
         def ch_methods_description                = Channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
-        ch_multiqc_files                      = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-        ch_multiqc_files                      = ch_multiqc_files.mix(ch_collated_versions)
-        ch_multiqc_files                      = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
+        ch_multiqc_files                          = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+        ch_multiqc_files                          = ch_multiqc_files.mix(ch_collated_versions)
+        ch_multiqc_files                          = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: false))
 
         MULTIQC (
             ch_multiqc_files.collect(),

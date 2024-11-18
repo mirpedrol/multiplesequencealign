@@ -5,9 +5,10 @@
 */
 
 // MODULES
-include { MULTIQC                } from '../modules/local/multiqc'
-include { PREPARE_MULTIQC } from '../modules/local/prepare_multiqc'
-include { PREPARE_SHINY   } from '../modules/local/prepare_shiny'
+include { MULTIQC                        } from '../modules/local/multiqc'
+include { PREPARE_MULTIQC                } from '../modules/local/prepare_multiqc'
+include { PREPARE_SHINY                  } from '../modules/local/prepare_shiny'
+include { CSVTK_JOIN as MERGE_STATS_EVAL } from '../modules/nf-core/csvtk/join/main.nf'
 
 //SUBWORKFLOWS
 include { EVALUATE               } from '../subworkflows/local/evaluate'
@@ -16,26 +17,38 @@ include { EVALUATE               } from '../subworkflows/local/evaluate'
 include { paramsSummaryMap       } from 'plugin/nf-validation'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { samplesheetToList      } from 'plugin/nf-schema'
 
 workflow EVALUATEMSA {
 
     take:
-    msa_alignment
-    ch_refs
-    ch_structures_template
+    evaluate_samplesheet
     stats_summary
     ch_versions
+    outdir
 
     main:
-    evaluation_summary           = Channel.empty()
-    stats_and_evaluation_summary = Channel.empty()
-    ch_multiqc_table             = Channel.empty()
+    def evaluation_summary           = Channel.empty()
+    def stats_and_evaluation_summary = Channel.empty()
+    def ch_multiqc_table             = Channel.empty()
+
+    //
+    // Read evaluate samplesheet and create channels
+    //
+    ch_input = Channel.fromList(samplesheetToList(evaluate_samplesheet, "${projectDir}/assets/schema_evaluate.json"))
+    ch_input
+        .multiMap { meta, msa, reference, structure ->
+            msa: [meta, msa]
+            reference: [meta, reference]
+            structure: [meta, structure]
+        }
+        .set { ch_input_multi }
 
     //
     // Evaluate the quality of the alignment
     //
     if (!params.skip_eval) {
-        EVALUATE (msa_alignment, ch_refs, ch_structures_template)
+        EVALUATE (ch_input_multi.msa, ch_input_multi.reference, ch_input_multi.structure)
         ch_versions        = ch_versions.mix(EVALUATE.out.versions)
         evaluation_summary = evaluation_summary.mix(EVALUATE.out.eval_summary)
     }
@@ -44,8 +57,8 @@ workflow EVALUATEMSA {
     // Combine stats and evaluation reports into a single CSV
     //
     if (!params.skip_stats || !params.skip_eval) {
-        stats_summary_csv = stats_summary.map{ meta, csv -> csv }
-        eval_summary_csv  = evaluation_summary.map{ meta, csv -> csv }
+        def stats_summary_csv = stats_summary.map{ meta, csv -> csv }
+        def eval_summary_csv  = evaluation_summary.map{ meta, csv -> csv }
         stats_summary_csv.mix(eval_summary_csv)
                         .collect()
                         .map {
@@ -70,7 +83,7 @@ workflow EVALUATEMSA {
 
     softwareVersionsToYAML(ch_versions)
         .collectFile(
-            storeDir: "${params.outdir}/pipeline_info",
+            storeDir: "${outdir}/pipeline_info",
             name: 'nf_core_pipeline_software_mqc_versions.yml',
             sort: true,
             newLine: true
@@ -79,7 +92,7 @@ workflow EVALUATEMSA {
     //
     // MODULE: MultiQC
     //
-    multiqc_out = Channel.empty()
+    def multiqc_out = Channel.empty()
     if (!params.skip_multiqc && (!params.skip_stats || !params.skip_eval)) {
         ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
         ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()

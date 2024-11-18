@@ -87,7 +87,7 @@
                     "help": "If the provided arguments contain a double dash, make sure to provide them with an assignment operator, e.g. `--treealign_args='--arg1 --arg2'`."
                 }
             }
-        }
+        },
         "stats_options": {
             "title": "Stats options",
             "type": "object",

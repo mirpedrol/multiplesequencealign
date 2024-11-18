@@ -35,6 +35,7 @@ workflow NFCORE_MULTIPLESEQUENCEALIGN {
 
     take:
     samplesheet // channel: samplesheet read in from --input
+    outdir
 
     main:
     def ch_versions = Channel.empty()
@@ -44,7 +45,8 @@ workflow NFCORE_MULTIPLESEQUENCEALIGN {
     //
     MULTIPLESEQUENCEALIGN (
         samplesheet,
-        ch_versions
+        ch_versions,
+        outdir
     )
 
     emit:
@@ -55,10 +57,9 @@ workflow NFCORE_MULTIPLESEQUENCEALIGN {
 workflow NFCORE_EVALUATEMSA {
 
     take:
-    msa_alignment          // channel: [ meta, /path/to/file.aln ]
-    ch_refs                // channel: [ meta, /path/to/file.aln ]
-    ch_structures_template // channel: [ meta, /path/to/file.pdb ]
-    stats_summary          // channel: [ meta, /path/to/file.csv ]
+    evaluate_samplesheet // channel: [ /path/to/file.csv ]
+    stats_summary        // channel: [ meta, /path/to/file.csv ]
+    outdir
 
     main:
     def ch_versions = Channel.empty()
@@ -67,11 +68,10 @@ workflow NFCORE_EVALUATEMSA {
     // WORKFLOW: Run evaluation pipelines
     //
     EVALUATEMSA (
-        msa_alignment,
-        ch_refs,
-        ch_structures_template,
+        evaluate_samplesheet,
         stats_summary,
-        ch_versions
+        ch_versions,
+        outdir
     )
 }
 /*
@@ -100,10 +100,9 @@ workflow {
     if (params.evaluate) {
         // WORKFLOW: Run evaluation workflow
         NFCORE_EVALUATEMSA (
-            PIPELINE_INITIALISATION.out.msa_alignment,
-            PIPELINE_INITIALISATION.out.ch_refs,
-            PIPELINE_INITIALISATION.out.ch_structures_template,
-            PIPELINE_INITIALISATION.out.stats_summary
+            "${params.outdir}/downstream_samplesheets/evaluation.csv",
+            "${params.outdir}/downstream_samplesheets/stats.csv",
+            params.outdir
         )
     } else {
         //
@@ -111,6 +110,7 @@ workflow {
         //
         NFCORE_MULTIPLESEQUENCEALIGN (
             PIPELINE_INITIALISATION.out.samplesheet,
+            params.outdir
         )
     }
 

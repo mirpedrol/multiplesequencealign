@@ -1,0 +1,32 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/assets/schema_input.json",
+    "title": "nf-core/multiplesequencealign pipeline - params.input schema",
+    "description": "Schema for the file provided with params.input",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "msa": {
+                "type": "string",
+                "pattern": "^\\S+\\.aln$",
+                "description": "aln file containing the MSA",
+                "errorMessage": "Must end with .aln"
+            },
+            "reference": {
+                "type": "string"
+            },
+            "structures": {
+                "type": "string"
+            }
+        },
+        "required": ["id"],
+        "anyOf": [{ "required": ["msa"] }, { "required": ["structures"] }]
+    }
+}
