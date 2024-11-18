@@ -14,7 +14,7 @@ include { CSVTK_JOIN as MERGE_STATS_EVAL } from '../modules/nf-core/csvtk/join/m
 include { EVALUATE               } from '../subworkflows/local/evaluate'
 
 // FUNCTIONS
-include { paramsSummaryMap       } from 'plugin/nf-validation'
+include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { samplesheetToList      } from 'plugin/nf-schema'

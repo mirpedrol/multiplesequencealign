@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/assets/schema_input.json",
-    "title": "nf-core/multiplesequencealign pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input",
+    "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/assets/schema_stats.json",
+    "title": "nf-core/multiplesequencealign pipeline - schema",
+    "description": "Schema for the stats file",
     "type": "array",
     "items": {
         "type": "object",
@@ -14,10 +14,12 @@
                 "meta": ["id"]
             },
             "stats": {
-                "type": "file",
+                "type": "string",
+                "format": "file-path",
                 "pattern": "^\\S+\\.csv$",
                 "description": "dsv file containing the stats of the input sequences.",
-                "errorMessage": "Must end with .csv"
+                "errorMessage": "Must end with .csv",
+                "meta": ["stats"]
             }
         },
         "required": ["id", "stats"]

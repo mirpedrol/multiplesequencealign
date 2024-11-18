@@ -19,15 +19,19 @@ workflow SAMPLESHEET_EVALUATION {
     def ch_existing_samplesheet = Channel.empty()
     if (samplesheet.exists()) {
         ch_existing_samplesheet = Channel.fromList(samplesheetToList(samplesheet, "${projectDir}/assets/schema_evaluate.json"))
+            .flatten()
     }
     // Create a channel with the new values for the samplesheet
     def ch_info_for_samplesheet = ch_msa
+        .view()
         .join(ch_references, by: 0, remainder: true)
         .join(ch_structures, by: 0, remainder: true)
         .map { meta, msa, reference, structure ->
-            [id: meta.id, msa: msa, reference: reference, structure: structure]
+            [id: meta.id, msa: msa, reference: reference, structures: structure]
         }
     // Join both channels
+    ch_existing_samplesheet.dump(tag: "existing")
+    ch_info_for_samplesheet.dump(tag: "new")
     ch_existing_samplesheet
         .mix(ch_info_for_samplesheet)
         .unique()
@@ -47,6 +51,7 @@ workflow SAMPLESHEET_STATS {
     def ch_existing_samplesheet = Channel.empty()
     if (samplesheet.exists()) {
         ch_existing_samplesheet = Channel.fromList(samplesheetToList(samplesheet, "${projectDir}/assets/schema_stats.json"))
+            .flatten()
     }
     // Create a channel with the new values for the samplesheet
     def ch_info_for_samplesheet = stats_summary
@@ -54,6 +59,8 @@ workflow SAMPLESHEET_STATS {
             [id: meta.id, stats: csv]
         }
     // Join both channels
+    ch_existing_samplesheet.dump(tag: "existing")
+    ch_info_for_samplesheet.dump(tag: "new")
     ch_existing_samplesheet
         .mix(ch_info_for_samplesheet)
         .unique()

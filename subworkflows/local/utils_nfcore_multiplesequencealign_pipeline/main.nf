@@ -8,8 +8,8 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { UTILS_NFVALIDATION_PLUGIN } from '../../nf-core/utils_nfvalidation_plugin'
-include { paramsSummaryMap          } from 'plugin/nf-validation'
+include { UTILS_NFSCHEMA_PLUGIN } from '../../nf-core/utils_nfschema_plugin'
+include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { samplesheetToList         } from 'plugin/nf-schema'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
@@ -30,7 +30,6 @@ workflow PIPELINE_INITIALISATION {
 
     take:
     version           // boolean: Display version and exit
-    help              // boolean: Display help text
     validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
     monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args //  array: List of positional nextflow CLI args
@@ -54,16 +53,10 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    pre_help_text = nfCoreLogo(monochrome_logs)
-    post_help_text = '\n' + workflowCitation() + '\n' + dashedLine(monochrome_logs)
-    def String workflow_command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
-    UTILS_NFVALIDATION_PLUGIN (
-        help,
-        workflow_command,
-        pre_help_text,
-        post_help_text,
+    UTILS_NFSCHEMA_PLUGIN (
+        workflow,
         validate_params,
-        "nextflow_schema.json"
+        null
     )
 
     //

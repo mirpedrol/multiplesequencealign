@@ -12,7 +12,7 @@ include { MULTIQC                } from '../modules/local/multiqc'
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
-include { paramsSummaryMap       } from 'plugin/nf-validation'
+include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_multiplesequencealign_pipeline'

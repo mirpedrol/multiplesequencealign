@@ -1,8 +1,8 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/assets/schema_input.json",
-    "title": "nf-core/multiplesequencealign pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input",
+    "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/assets/schema_evaluate.json",
+    "title": "nf-core/multiplesequencealign pipeline - schema for the evaluation workflow",
+    "description": "Schema for the evaluation workflow",
     "type": "array",
     "items": {
         "type": "object",
@@ -14,19 +14,24 @@
                 "meta": ["id"]
             },
             "msa": {
-                "type": "file",
-                "pattern": "^\\S+\\.aln$",
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^\\S+\\.aln(.gz)$",
                 "description": "aln file containing the MSA",
-                "errorMessage": "Must end with .aln"
+                "errorMessage": "Must end with .aln",
+                "meta": ["msa"]
             },
             "reference": {
-                "type": "file"
+                "type": "string",
+                "format": "file-path",
+                "meta": ["reference"]
             },
             "structures": {
-                "type": "file"
+                "type": "string",
+                "format": "file-path",
+                "meta": ["structures"]
             }
         },
-        "required": ["id"],
-        "anyOf": [{ "required": ["msa"] }, { "required": ["structures"] }]
+        "anyOf": [{ "required": ["id", "msa"] }, { "required": ["id", "structures"] }]
     }
 }
