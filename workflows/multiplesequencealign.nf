@@ -107,7 +107,7 @@ workflow MULTIPLESEQUENCEALIGN {
     // If the directory is compressed, it is uncompressed first.
     ch_structures
         .branch { structures ->
-            compressed:   structures[1].endsWith('.tar.gz')
+            compressed:   structures[1].name.endsWith('.tar.gz')
             uncompressed: true
         }
         .set { ch_structures }

@@ -73,6 +73,9 @@ workflow NFCORE_EVALUATEMSA {
         ch_versions,
         outdir
     )
+
+    emit:
+    multiqc_report = EVALUATEMSA.out.multiqc
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,17 +87,7 @@ workflow {
 
     main:
 
-    //
-    // SUBWORKFLOW: Run initialisation tasks
-    //
-    PIPELINE_INITIALISATION (
-        params.version,
-        params.validate_params,
-        params.monochrome_logs,
-        args,
-        params.outdir,
-        params.input,
-    )
+    def ch_multiqc_report = Channel.empty()
 
     if (params.evaluate) {
         // WORKFLOW: Run evaluation workflow
@@ -103,7 +96,21 @@ workflow {
             "${params.outdir}/downstream_samplesheets/stats.csv",
             params.outdir
         )
+
+        ch_multiqc_report = NFCORE_EVALUATEMSA.out.multiqc_report
     } else {
+        //
+        // SUBWORKFLOW: Run initialisation tasks
+        //
+        PIPELINE_INITIALISATION (
+            params.version,
+            params.validate_params,
+            params.monochrome_logs,
+            args,
+            params.outdir,
+            params.input,
+        )
+
         //
         // WORKFLOW: Run main workflow
         //
@@ -111,6 +118,8 @@ workflow {
             PIPELINE_INITIALISATION.out.samplesheet,
             params.outdir
         )
+
+        ch_multiqc_report = NFCORE_MULTIPLESEQUENCEALIGN.out.multiqc_report
     }
 
     //
@@ -123,7 +132,7 @@ workflow {
         params.outdir,
         params.monochrome_logs,
         params.hook_url,
-        NFCORE_MULTIPLESEQUENCEALIGN.out.multiqc_report,
+        ch_multiqc_report,
         "${params.outdir}/shiny_app",
         "${params.outdir}/pipeline_info",
         params.shiny_trace_mode,

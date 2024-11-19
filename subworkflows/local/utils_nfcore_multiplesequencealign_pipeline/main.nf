@@ -94,7 +94,7 @@ workflow PIPELINE_COMPLETION {
     multiqc_report   //  string: Path to MultiQC report
     shiny_dir_path   //  string: Path to shiny stats file
     trace_dir_path   //  string: Path to trace file
-    shiny_trace_mode // string: Mode to use for shiny trace file (default: "latest", options: "latest", "all")
+    shiny_trace_mode //  string: Mode to use for shiny trace file (default: "latest", options: "latest", "all")
     evaluate         // boolean: Evaluate the results
 
     main:

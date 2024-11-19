@@ -18,6 +18,8 @@ include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { samplesheetToList      } from 'plugin/nf-schema'
+include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_multiplesequencealign_pipeline'
+
 
 workflow EVALUATEMSA {
 
@@ -35,12 +37,18 @@ workflow EVALUATEMSA {
     //
     // Read evaluate samplesheet and create channels
     //
-    ch_input = Channel.fromList(samplesheetToList(evaluate_samplesheet, "${projectDir}/assets/schema_evaluate.json"))
+    def ch_input = Channel.fromList(samplesheetToList(evaluate_samplesheet, "${projectDir}/assets/schema_evaluate.json"))
     ch_input
-        .multiMap { meta, msa, reference, structure ->
+        .flatten()
+        .map { it ->
+            [["id": it.id, "alignment": it.alignment, "alignment_args": it.alignment_args, "guidetree": it.guidetree, "guidetree_args": it.guidetree_args, "treealign": it.treealign, "treealign_args": it.treealign_args],
+            it.msa, it.reference, it.structures]
+        }
+        .groupTuple(by: [0,1,2])
+        .multiMap { meta, msa, reference, structures ->
             msa: [meta, msa]
             reference: [meta, reference]
-            structure: [meta, structure]
+            structures: [meta, structures]
         }
         .set { ch_input_multi }
 
@@ -48,7 +56,7 @@ workflow EVALUATEMSA {
     // Evaluate the quality of the alignment
     //
     if (!params.skip_eval) {
-        EVALUATE (ch_input_multi.msa, ch_input_multi.reference, ch_input_multi.structure)
+        EVALUATE (ch_input_multi.msa, ch_input_multi.reference, ch_input_multi.structures)
         ch_versions        = ch_versions.mix(EVALUATE.out.versions)
         evaluation_summary = evaluation_summary.mix(EVALUATE.out.eval_summary)
     }
@@ -57,7 +65,12 @@ workflow EVALUATEMSA {
     // Combine stats and evaluation reports into a single CSV
     //
     if (!params.skip_stats || !params.skip_eval) {
-        def stats_summary_csv = stats_summary.map{ meta, csv -> csv }
+        def ch_stats = Channel.fromList(samplesheetToList(stats_summary, "${projectDir}/assets/schema_stats.json"))
+            .map { it ->
+                def meta = ["id": it.id]
+                [ meta, it.stats ]
+            }
+        def stats_summary_csv = ch_stats.map{ meta, csv -> csv }
         def eval_summary_csv  = evaluation_summary.map{ meta, csv -> csv }
         stats_summary_csv.mix(eval_summary_csv)
                         .collect()
@@ -92,7 +105,8 @@ workflow EVALUATEMSA {
     //
     // MODULE: MultiQC
     //
-    def multiqc_out = Channel.empty()
+    def multiqc_out      = Channel.empty()
+    def ch_multiqc_files = Channel.empty()
     if (!params.skip_multiqc && (!params.skip_stats || !params.skip_eval)) {
         ch_multiqc_config                     = Channel.fromPath("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
         ch_multiqc_custom_config              = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()

@@ -20,18 +20,36 @@ workflow SAMPLESHEET_EVALUATION {
     if (samplesheet.exists()) {
         ch_existing_samplesheet = Channel.fromList(samplesheetToList(samplesheet, "${projectDir}/assets/schema_evaluate.json"))
             .flatten()
+            .map { it  ->
+                if (it.reference) {
+                    [id: it.id,
+                    alignment:it.alignment, alignment_args:it.alignment_args,
+                    guidetree:it.guidetree, guidetree_args:it.guidetree_args,
+                    treealign:it.treealign, treealign_args:it.treealign_args,
+                    msa: it.msa, reference: it.reference.toUri(), structures: it.structures]
+                } else {
+                    [id: it.id,
+                    alignment:it.alignment, alignment_args:it.alignment_args,
+                    guidetree:it.guidetree, guidetree_args:it.guidetree_args,
+                    treealign:it.treealign, treealign_args:it.treealign_args,
+                    msa: it.msa, reference: it.reference, structures: it.structures]
+                }
+            }
     }
     // Create a channel with the new values for the samplesheet
     def ch_info_for_samplesheet = ch_msa
-        .view()
         .join(ch_references, by: 0, remainder: true)
         .join(ch_structures, by: 0, remainder: true)
-        .map { meta, msa, reference, structure ->
-            [id: meta.id, msa: msa, reference: reference, structures: structure]
+        .flatMap { meta, msa, reference, structures ->
+            structures.collect { structure ->
+                [id: meta.id,
+                alignment:params.alignment, alignment_args:params.alignment_args,
+                guidetree:params.guidetree, guidetree_args:params.guidetree_args,
+                treealign:params.treealign, treealign_args:params.treealign_args,
+                msa: msa, reference: reference.toUri(), structures: structure]
+            }
         }
     // Join both channels
-    ch_existing_samplesheet.dump(tag: "existing")
-    ch_info_for_samplesheet.dump(tag: "new")
     ch_existing_samplesheet
         .mix(ch_info_for_samplesheet)
         .unique()
@@ -59,8 +77,6 @@ workflow SAMPLESHEET_STATS {
             [id: meta.id, stats: csv]
         }
     // Join both channels
-    ch_existing_samplesheet.dump(tag: "existing")
-    ch_info_for_samplesheet.dump(tag: "new")
     ch_existing_samplesheet
         .mix(ch_info_for_samplesheet)
         .unique()
@@ -100,8 +116,15 @@ workflow GENERATE_DOWNSTREAM_SAMPLESHEETS {
 def channelToSamplesheet(ch_list_for_samplesheet, path) {
     ch_list_for_samplesheet
         .first()
-        .map { it -> it.keySet().join(",") }
-        .concat(ch_list_for_samplesheet.map { it -> it.values().join(",").replace("null", "") })
+        .map { it ->
+            it.keySet().join(",")
+        }
+        .concat(
+            ch_list_for_samplesheet
+                .map { it ->
+                    it.values().join(",").replace("null", "").replace("[]", "")
+                }
+        )
         .collectFile(
             name: "${path}.csv",
             newLine: true,

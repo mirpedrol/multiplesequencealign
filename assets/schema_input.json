@@ -15,21 +15,21 @@
             },
             "fasta": {
                 "type": "string",
+                "format": "file-path",
                 "pattern": "^\\S+\\.f(ast)?a$",
-                "errorMessage": "fasta file. Must end with .fa or .fasta",
-                "default": ""
+                "errorMessage": "fasta file. Must end with .fa or .fasta"
             },
             "reference": {
                 "type": "string",
-                "default": ""
+                "format": "file-path"
             },
             "dependencies": {
                 "type": "string",
-                "default": ""
+                "format": "file-path"
             },
             "template": {
                 "type": "string",
-                "default": ""
+                "format": "file-path"
             }
         },
         "required": ["id"],
