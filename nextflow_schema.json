@@ -104,6 +104,44 @@
                 }
             }
         },
+        "tool_selectors": {
+            "title": "Tool selectors",
+            "type": "object",
+            "description": "Parameters to select which tools to use",
+            "default": "",
+            "fa_icon": "fas fa-tools",
+            "oneOf": [{"required": ["alignment"]}, {"required": ["guidetree", "treealign"]}],
+            "properties": {
+                "alignment": {
+                    "type": "string",
+                    "description": "Which aligner tool to use"
+                },
+                "guidetree": {
+                    "type": "string",
+                    "description": "Which tool to use to generate a guide tree"
+                },
+                "treealign": {
+                    "type": "string",
+                    "description": "Which aligner tool to use to align providing a generated guide tree"
+                },
+                "alignment_args": {
+                    "type": "string",
+                    "description": "Arguments to pass to the alignment tool"
+                },
+                "guidetree_args": {
+                    "type": "string",
+                    "description": "Arguments to pass to the guide tree tool"
+                },
+                "treealign_args": {
+                    "type": "string",
+                    "description": "Arguments to pass to the tree"
+                },
+                "evaluate": {
+                    "type": "boolean",
+                    "description": "Run the evaluation workflow"
+                }
+            }
+        },
         "stats_options": {
             "title": "Stats options",
             "type": "object",
@@ -353,6 +391,9 @@
     "allOf": [
         {
             "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/tool_selectors"
         },
         {
             "$ref": "#/$defs/align_options"
