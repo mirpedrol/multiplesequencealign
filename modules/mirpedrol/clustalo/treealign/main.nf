@@ -12,7 +12,7 @@ process CLUSTALO_TREEALIGN {
     tuple val(meta2), path(tree)
 
     output:
-    tuple val(meta), path("*.aln.gz"), emit: alignment
+    tuple val(meta), path("*.aln"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -32,7 +32,7 @@ process CLUSTALO_TREEALIGN {
         --guidetree-in=${tree} \
         --threads=${task.cpus} \
         $args \
-        --force -o >(pigz -cp ${task.cpus} > ${prefix}.aln.gz)
+        > ${prefix}.aln
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -45,7 +45,7 @@ process CLUSTALO_TREEALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln.gz
+    touch ${prefix}.aln
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

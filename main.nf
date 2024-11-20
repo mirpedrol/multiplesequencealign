@@ -36,6 +36,12 @@ workflow NFCORE_MULTIPLESEQUENCEALIGN {
     take:
     samplesheet // channel: samplesheet read in from --input
     outdir
+    alignment      // params.alignment
+    alignment_args // params.alignment_args
+    guidetree      // params.guidetree
+    guidetree_args // params.guidetree_args
+    treealign      // params.treealign
+    treealign_args // params.treealign_args
 
     main:
     def ch_versions = Channel.empty()
@@ -46,7 +52,13 @@ workflow NFCORE_MULTIPLESEQUENCEALIGN {
     MULTIPLESEQUENCEALIGN (
         samplesheet,
         ch_versions,
-        outdir
+        outdir,
+        alignment,
+        alignment_args,
+        guidetree,
+        guidetree_args,
+        treealign,
+        treealign_args
     )
 
     emit:
@@ -116,7 +128,13 @@ workflow {
         //
         NFCORE_MULTIPLESEQUENCEALIGN (
             PIPELINE_INITIALISATION.out.samplesheet,
-            params.outdir
+            params.outdir,
+            params.alignment,
+            params.alignment_args ,
+            params.guidetree,
+            params.guidetree_args,
+            params.treealign,
+            params.treealign_args
         )
 
         ch_multiqc_report = NFCORE_MULTIPLESEQUENCEALIGN.out.multiqc_report

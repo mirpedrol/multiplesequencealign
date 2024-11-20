@@ -46,7 +46,7 @@
             "msa": {
                 "type": "string",
                 "format": "file-path",
-                "pattern": "^\\S+\\.aln(.gz)$",
+                "pattern": "^\\S+\\.aln$",
                 "description": "aln file containing the MSA",
                 "errorMessage": "Must end with .aln",
                 "meta": ["msa"]

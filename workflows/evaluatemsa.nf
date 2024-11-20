@@ -41,7 +41,10 @@ workflow EVALUATEMSA {
     ch_input
         .flatten()
         .map { it ->
-            [["id": it.id, "alignment": it.alignment, "alignment_args": it.alignment_args, "guidetree": it.guidetree, "guidetree_args": it.guidetree_args, "treealign": it.treealign, "treealign_args": it.treealign_args],
+            [["id": it.id,
+            "alignment": it.alignment ?: "", "alignment_args": it.alignment_args ?: "",
+            "guidetree": it.guidetree ?: "", "guidetree_args": it.guidetree_args ?: "",
+            "treealign": it.treealign ?: "", "treealign_args": it.treealign_args ?: ""],
             it.msa, it.reference, it.structures]
         }
         .groupTuple(by: [0,1,2])

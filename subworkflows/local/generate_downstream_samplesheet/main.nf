@@ -37,21 +37,29 @@ workflow SAMPLESHEET_EVALUATION {
             }
     }
     // Create a channel with the new values for the samplesheet
-    def ch_info_for_samplesheet = ch_msa
+    def ch_intermediate = ch_msa
         .join(ch_references, by: 0, remainder: true)
         .join(ch_structures, by: 0, remainder: true)
+        .branch { meta, msa, reference, structures ->
+            structures: structures != null
+            no_structures: true
+        }
+    ch_intermediate.structures
         .flatMap { meta, msa, reference, structures ->
             structures.collect { structure ->
-                [id: meta.id,
-                alignment:params.alignment, alignment_args:params.alignment_args,
-                guidetree:params.guidetree, guidetree_args:params.guidetree_args,
-                treealign:params.treealign, treealign_args:params.treealign_args,
-                msa: msa, reference: reference.toUri(), structures: structure]
+                meta + [msa: msa, reference: reference.toUri(), structures: structure]
             }
         }
+        .set { ch_intermediate_structures }
+    ch_intermediate.no_structures
+        .map { meta, msa, reference, structures ->
+            meta + [msa: msa, reference: reference.toUri(), structures: null]
+        }
+        .set { ch_intermediate_no_structures }
     // Join both channels
     ch_existing_samplesheet
-        .mix(ch_info_for_samplesheet)
+        .mix(ch_intermediate_structures)
+        .mix(ch_intermediate_no_structures)
         .unique()
         .set { ch_list_for_samplesheet }
 
@@ -74,7 +82,8 @@ workflow SAMPLESHEET_STATS {
     // Create a channel with the new values for the samplesheet
     def ch_info_for_samplesheet = stats_summary
         .map { meta, csv ->
-            [id: meta.id, stats: csv]
+            // If the path chanes, make sure to change the publishDir from MERGE_STATS in modules.config
+            [id: meta.id, stats: file(file(params.outdir).toString() + "/stats/" + csv.getName())]
         }
     // Join both channels
     ch_existing_samplesheet

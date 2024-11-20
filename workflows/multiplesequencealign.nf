@@ -61,44 +61,61 @@ include { MSA_TREEALIGN } from '../subworkflows/mirpedrol/msa_treealign/main'
 workflow MULTIPLESEQUENCEALIGN {
 
     take:
-    ch_input    // channel: [ meta, path(sequence.fasta), path(reference.fasta), path(pdb_structures.tar.gz), path(templates.txt) ]
-    ch_versions // channel: [ path(versions.yml) ]
-    outdir      // params.outdir
+    ch_input       // channel: [ meta, path(sequence.fasta), path(reference.fasta), path(pdb_structures.tar.gz), path(templates.txt) ]
+    ch_versions    // channel: [ path(versions.yml) ]
+    outdir         // params.outdir
+    alignment      // params.alignment
+    alignment_args // params.alignment_args
+    guidetree      // params.guidetree
+    guidetree_args // params.guidetree_args
+    treealign      // params.treealign
+    treealign_args // params.treealign_args
 
     main:
     def ch_multiqc_files             = Channel.empty()
     def stats_summary                = Channel.empty()
 
     ch_input
-        .map {
-            meta, fasta, ref, str, template ->
-                [ meta, file(fasta) ]
+        .map {meta, fasta, ref, structure, template ->
+            def alignment_clean = alignment ? alignment.replace("/", "-") : ""
+            def alignment_args_clean = alignment_args ? alignment_args.toString().trim().replace("  ", " ").replace(" ", "-").replaceAll("==", "-").replaceAll("\\s+", "") : ""
+            def guidetree_clean = guidetree ? guidetree.replace("/", "-") : ""
+            def guidetree_args_clean = guidetree_args ? guidetree_args.toString().trim().replace("  ", " ").replace(" ", "-").replaceAll("==", "-").replaceAll("\\s+", "") : ""
+            def treealign_clean = treealign ? treealign.replace("/", "-") : ""
+            def treealign_args_clean = treealign_args ? treealign_args.toString().trim().replace("  ", " ").replace(" ", "-").replaceAll("==", "-").replaceAll("\\s+", "") : ""
+            [
+                [
+                    "id": meta.id,
+                    "alignment": alignment_clean, "alignment_args": alignment_args_clean,
+                    "guidetree": guidetree_clean, "guidetree_args": guidetree_args_clean,
+                    "treealign": treealign_clean, "treealign_args": treealign_args_clean
+                ],
+                fasta, ref, structure, template
+            ]
         }
-        .set { ch_seqs }
+        .multiMap { meta, fasta, ref, structure, template ->
+            seqs: [ meta, fasta ]
+            refs: [ meta, ref ]
+            structures: [ meta, structure ]
+            templates: [ meta, template ]
+        }
+        .set { ch_input_multi }
 
-    ch_input
-        .filter { input -> input[2].size() > 0}
-        .map {
-            meta, fasta, ref, str, template ->
-                [ meta, file(ref) ]
+    ch_input_multi.refs
+        .filter { meta, ref ->
+            ref.size() > 0
         }
         .set { ch_refs }
-
-    ch_input
-        .filter { input -> input[4].size() > 0}
-        .map {
-            meta, fasta, ref, str, template ->
-                [ meta, file(template) ]
+    ch_input_multi.structures
+        .filter { meta, structure ->
+            structure.size() > 0
+        }
+        .set { ch_structures }
+    ch_input_multi.templates
+        .filter { meta, template ->
+            template.size() > 0
         }
         .set { ch_templates }
-
-    ch_input
-        .map {
-            meta, fasta, ref, str, template ->
-                [ meta, str ]
-        }
-        .filter { input -> input[1].size() > 0 }
-        .set { ch_structures }
 
     // ----------------
     // STRUCTURES
@@ -161,7 +178,7 @@ workflow MULTIPLESEQUENCEALIGN {
     //
     if (!params.skip_stats) {
         STATS (
-            ch_seqs,
+            ch_input_multi.seqs,
             ch_structures
         )
         ch_versions   = ch_versions.mix(STATS.out.versions)
@@ -170,17 +187,17 @@ workflow MULTIPLESEQUENCEALIGN {
 
     def msa_alignment = Channel.empty()
 
-    if (params.guidetree && params.treealign) {
+    if (guidetree && treealign) {
         //
         // Compute tree
         //
         MSA_GUIDETREE (
-            ch_seqs
+            ch_input_multi.seqs
         )
         ch_versions = ch_versions.mix(MSA_GUIDETREE.out.versions)
 
         // Prepare channels for treealign to make sure the correct tree is used for the respective alignment
-        ch_seqs
+        ch_input_multi.seqs
             .combine(MSA_GUIDETREE.out.tree, by:0)
             .set { ch_seqs_trees }
         ch_seqs_trees
@@ -201,12 +218,12 @@ workflow MULTIPLESEQUENCEALIGN {
         msa_alignment = msa_alignment.mix(MSA_TREEALIGN.out.alignment)
     }
 
-    if (params.alignment) {
+    if (alignment) {
         //
         // Align
         //
         MSA_ALIGNMENT (
-            ch_seqs
+            ch_input_multi.seqs
         )
         ch_versions = ch_versions.mix(MSA_ALIGNMENT.out.versions)
         msa_alignment = msa_alignment.mix(MSA_ALIGNMENT.out.alignment)

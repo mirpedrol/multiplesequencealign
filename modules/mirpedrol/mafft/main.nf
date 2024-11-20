@@ -11,7 +11,7 @@ process MAFFT {
     tuple val(meta) , path(fasta)
 
     output:
-    tuple val(meta), path("*.aln.gz"), emit: alignment
+    tuple val(meta), path("*.aln"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -25,7 +25,7 @@ process MAFFT {
         --thread ${task.cpus} \\
         ${args} \\
         ${fasta} \\
-        | pigz -cp ${task.cpus} > ${prefix}.aln.gz
+        > ${prefix}.aln
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -38,7 +38,7 @@ process MAFFT {
     def args         = task.ext.args   ?: ''
     def prefix       = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln.gz
+    touch ${prefix}.aln
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
