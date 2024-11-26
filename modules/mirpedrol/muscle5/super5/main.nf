@@ -10,7 +10,7 @@ process MUSCLE5_SUPER5 {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("*.aln.gz"), emit: alignment
+    tuple val(meta), path("*.aln"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -20,7 +20,6 @@ process MUSCLE5_SUPER5 {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     prefix = args.contains('-perm all') ? "${prefix}@" : "${prefix}"
-    def write_output = (!args.contains('-perm all')) ? " -output >(pigz -cp ${task.cpus} > ${prefix}.aln.gz)" : "-output ${prefix}.aln"
     // muscle internally expands the shell pipe to a file descriptor of the form /dev/fd/<id>
     // this causes it to fail, unless -output is left at the end of the call
     // see also clustalo/align
@@ -31,7 +30,7 @@ process MUSCLE5_SUPER5 {
         -super5 ${fasta} \\
         ${args} \\
         -threads ${task.cpus} \\
-        $write_output
+        -output ${prefix}.aln
 
 
     # output may be multiple files if -perm all is set
@@ -51,7 +50,7 @@ process MUSCLE5_SUPER5 {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln.gz
+    touch ${prefix}.aln
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -25,13 +25,13 @@ workflow EVALUATE {
 
     main:
 
-    ch_versions     = Channel.empty()
-    sp_csv          = Channel.empty()
-    tc_csv          = Channel.empty()
-    irmsd_csv       = Channel.empty()
-    tcs_csv         = Channel.empty()
-    gaps_csv        = Channel.empty()
-    ch_eval_summary = Channel.empty()
+    def ch_versions     = Channel.empty()
+    def sp_csv          = Channel.empty()
+    def tc_csv          = Channel.empty()
+    def irmsd_csv       = Channel.empty()
+    def tcs_csv         = Channel.empty()
+    def gaps_csv        = Channel.empty()
+    def ch_eval_summary = Channel.empty()
 
 
     // --------------------------
@@ -79,7 +79,7 @@ workflow EVALUATE {
     // Total column score
     if( params.calc_tc ) {
         TCOFFEE_ALNCOMPARE_TC (alignment_and_ref)
-        tc_scores = TCOFFEE_ALNCOMPARE_TC.out.scores
+        def tc_scores = TCOFFEE_ALNCOMPARE_TC.out.scores
         ch_versions = ch_versions.mix(TCOFFEE_ALNCOMPARE_TC.out.versions.first())
 
         tc_scores
@@ -106,7 +106,7 @@ workflow EVALUATE {
     // number of gaps
     if ( params.calc_gaps ) {
         CALC_GAPS (ch_msa)
-        gaps_scores = CALC_GAPS.out.gaps
+        def gaps_scores = CALC_GAPS.out.gaps
         ch_versions = ch_versions.mix(CALC_GAPS.out.versions)
 
         gaps_scores
@@ -153,10 +153,10 @@ workflow EVALUATE {
             msa_str.msa,
             msa_str.structures
         )
-        tcoffee_irmsd_scores = TCOFFEE_IRMSD.out.irmsd
+        def tcoffee_irmsd_scores = TCOFFEE_IRMSD.out.irmsd
         ch_versions = ch_versions.mix(TCOFFEE_IRMSD.out.versions.first())
         PARSE_IRMSD (tcoffee_irmsd_scores)
-        tcoffee_irmsd_scores_tot = PARSE_IRMSD.out.irmsd_tot
+        def tcoffee_irmsd_scores_tot = PARSE_IRMSD.out.irmsd_tot
         ch_versions = ch_versions.mix(PARSE_IRMSD.out.versions)
 
         ch_irmsd_summary = tcoffee_irmsd_scores_tot.map{
@@ -166,7 +166,7 @@ workflow EVALUATE {
                                                 }
         CONCAT_IRMSD(ch_irmsd_summary, "csv", "csv")
         irmsd_csv = CONCAT_IRMSD.out.csv
-        versions = ch_versions.mix(CONCAT_IRMSD.out.versions)
+        def versions = ch_versions.mix(CONCAT_IRMSD.out.versions)
     }
 
 
@@ -178,7 +178,7 @@ workflow EVALUATE {
     if( params.calc_tcs ){
         // the second argument is empty but a lib file can be fed to it
         TCOFFEE_TCS (ch_msa, [[:], []])
-        tcs_scores = TCOFFEE_TCS.out.scores
+        def tcs_scores = TCOFFEE_TCS.out.scores
         ch_versions = ch_versions.mix(TCOFFEE_TCS.out.versions.first())
 
         tcs_scores
@@ -203,11 +203,11 @@ workflow EVALUATE {
     //      MERGE ALL STATS
     // -------------------------------------------
 
-    sp      = sp_csv.map    { meta, csv -> csv }
-    tc      = tc_csv.map    { meta, csv -> csv }
-    irmsd   = irmsd_csv.map { meta, csv -> csv }
-    gaps    = gaps_csv.map  { meta, csv -> csv }
-    tcs     = tcs_csv.map   { meta, csv -> csv }
+    def sp      = sp_csv.map    { meta, csv -> csv }
+    def tc      = tc_csv.map    { meta, csv -> csv }
+    def irmsd   = irmsd_csv.map { meta, csv -> csv }
+    def gaps    = gaps_csv.map  { meta, csv -> csv }
+    def tcs     = tcs_csv.map   { meta, csv -> csv }
 
     def number_of_evals = [
         params.calc_sp,

@@ -11,7 +11,7 @@ process MAGUS_ALIGN {
     tuple val(meta) , path(fasta)
 
     output:
-    tuple val(meta), path("*.aln.gz"), emit: alignment
+    tuple val(meta), path("*.aln"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -28,7 +28,7 @@ process MAGUS_ALIGN {
         -np $task.cpus \\
         -i $fasta \\
         -d ./ \\
-        --overwrite -o >(pigz -cp ${task.cpus} > ${prefix}.aln.gz) \\
+        -o ${prefix}.aln \\
         $args
 
     cat <<-END_VERSIONS > versions.yml
@@ -42,7 +42,7 @@ process MAGUS_ALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    echo "" | gzip > ${prefix}.aln.gz
+    touch ${prefix}.aln
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

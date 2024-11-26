@@ -8,9 +8,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { UTILS_NFVALIDATION_PLUGIN } from '../../nf-core/utils_nfvalidation_plugin'
-include { paramsSummaryMap          } from 'plugin/nf-validation'
-include { fromSamplesheet           } from 'plugin/nf-validation'
+include { UTILS_NFSCHEMA_PLUGIN } from '../../nf-core/utils_nfschema_plugin'
+include { paramsSummaryMap          } from 'plugin/nf-schema'
+include { samplesheetToList         } from 'plugin/nf-schema'
 include { UTILS_NEXTFLOW_PIPELINE   } from '../../nf-core/utils_nextflow_pipeline'
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
@@ -30,13 +30,11 @@ workflow PIPELINE_INITIALISATION {
 
     take:
     version           // boolean: Display version and exit
-    help              // boolean: Display help text
     validate_params   // boolean: Boolean whether to validate parameters against the schema at runtime
     monochrome_logs   // boolean: Do not use coloured log outputs
     nextflow_cli_args //  array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
     input             //  string: Path to input samplesheet
-    tools             //  string: Path to input tools samplesheet
 
     main:
 
@@ -55,16 +53,10 @@ workflow PIPELINE_INITIALISATION {
     //
     // Validate parameters and generate parameter summary to stdout
     //
-    pre_help_text = nfCoreLogo(monochrome_logs)
-    post_help_text = '\n' + workflowCitation() + '\n' + dashedLine(monochrome_logs)
-    def String workflow_command = "nextflow run ${workflow.manifest.name} -profile <docker/singularity/.../institute> --input samplesheet.csv --outdir <OUTDIR>"
-    UTILS_NFVALIDATION_PLUGIN (
-        help,
-        workflow_command,
-        pre_help_text,
-        post_help_text,
+    UTILS_NFSCHEMA_PLUGIN (
+        workflow,
         validate_params,
-        "nextflow_schema.json"
+        null
     )
 
     //
@@ -77,28 +69,10 @@ workflow PIPELINE_INITIALISATION {
     //
     // Create channel from input file provided through params.input
     //
-    ch_input = Channel.fromSamplesheet('input')
-    ch_tools = Channel.fromSamplesheet('tools')
-                .map {
-                    meta ->
-                        def meta_clone = meta[0].clone()
-                        def tree_map = [:]
-                        def align_map = [:]
-
-                        tree_map["tree"] = meta_clone["tree"]
-                        tree_map["args_tree"] = meta_clone["args_tree"]
-                        tree_map["args_tree_clean"] = Utils.cleanArgs(meta_clone.args_tree)
-
-                        align_map["aligner"] = meta_clone["aligner"]
-                        align_map["args_aligner"] = Utils.check_required_args(meta_clone["aligner"], meta_clone["args_aligner"])
-                        align_map["args_aligner_clean"] = Utils.cleanArgs(align_map["args_aligner"])
-
-                        [ tree_map, align_map ]
-                }.unique()
+    ch_input = Channel.fromList(samplesheetToList(params.input, "${projectDir}/assets/schema_input.json"))
 
     emit:
     samplesheet = ch_input
-    tools       = ch_tools
     versions    = ch_versions
 }
 
@@ -120,7 +94,8 @@ workflow PIPELINE_COMPLETION {
     multiqc_report   //  string: Path to MultiQC report
     shiny_dir_path   //  string: Path to shiny stats file
     trace_dir_path   //  string: Path to trace file
-    shiny_trace_mode // string: Mode to use for shiny trace file (default: "latest", options: "latest", "all")
+    shiny_trace_mode //  string: Mode to use for shiny trace file (default: "latest", options: "latest", "all")
+    evaluate         // boolean: Evaluate the results
 
     main:
 
@@ -140,7 +115,7 @@ workflow PIPELINE_COMPLETION {
             imNotification(summary_params, hook_url)
         }
 
-        if (shiny_trace_mode) {
+        if (shiny_trace_mode && evaluate) {
             getTraceForShiny(trace_dir_path, shiny_dir_path, shiny_trace_mode)
         }
 
@@ -226,13 +201,16 @@ def methodsDescriptionText(mqc_methods_yaml) {
     meta["manifest_map"] = workflow.manifest.toMap()
 
     // Pipeline DOI
+    // Pipeline DOI
     if (meta.manifest_map.doi) {
         // Using a loop to handle multiple DOIs
         // Removing `https://doi.org/` to handle pipelines using DOIs vs DOI resolvers
         // Removing ` ` since the manifest.doi is a string and not a proper list
         def temp_doi_ref = ""
-        String[] manifest_doi = meta.manifest_map.doi.tokenize(",")
-        for (String doi_ref: manifest_doi) temp_doi_ref += "(doi: <a href=\'https://doi.org/${doi_ref.replace("https://doi.org/", "").replace(" ", "")}\'>${doi_ref.replace("https://doi.org/", "").replace(" ", "")}</a>), "
+        def manifest_doi = meta.manifest_map.doi.tokenize(",")
+        manifest_doi.each { doi_ref ->
+            temp_doi_ref += "(doi: <a href=\'https://doi.org/${doi_ref.replace("https://doi.org/", "").replace(" ", "")}\'>${doi_ref.replace("https://doi.org/", "").replace(" ", "")}</a>), "
+        }
         meta["doi_text"] = temp_doi_ref.substring(0, temp_doi_ref.length() - 2)
     } else meta["doi_text"] = ""
     meta["nodoi_text"] = meta.manifest_map.doi ? "" : "<li>If available, make sure to update the text to include the Zenodo DOI of version of the pipeline used. </li>"
@@ -349,8 +327,6 @@ import nextflow.Nextflow
 import groovy.text.SimpleTemplateEngine
 
 class Utils {
-
-
 
     public static cleanArgs(argString) {
         def cleanArgs = argString.toString().trim().replace("  ", " ").replace(" ", "_").replaceAll("==", "_").replaceAll("\\s+", "")

@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/assets/schema_stats.json",
+    "title": "nf-core/multiplesequencealign pipeline - schema",
+    "description": "Schema for the stats file",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "stats": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^\\S+\\.csv$",
+                "description": "dsv file containing the stats of the input sequences.",
+                "errorMessage": "Must end with .csv",
+                "meta": ["stats"]
+            }
+        },
+        "required": ["id", "stats"]
+    }
+}

@@ -1,0 +1,67 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/multiplesequencealign/master/assets/schema_evaluate.json",
+    "title": "nf-core/multiplesequencealign pipeline - schema for the evaluation workflow",
+    "description": "Schema for the evaluation workflow",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "meta": ["id"]
+            },
+            "alignment": {
+                "type": "string",
+                "description": "the alignment tool from params.alignment",
+                "meta": ["alignment"]
+            },
+            "alignment_args": {
+                "type": "string",
+                "description": "the alignment arguments from params.alignment_args",
+                "meta": ["alignment_args"]
+            },
+            "guidetree": {
+                "type": "string",
+                "description": "the guidetree tool from params.guidetree",
+                "meta": ["guidetree"]
+            },
+            "guidetree_args": {
+                "type": "string",
+                "description": "the guidetree arguments from params.guidetree_args",
+                "meta": ["guidetree_args"]
+            },
+            "treealign": {
+                "type": "string",
+                "description": "the treealign tool from params.treealign",
+                "meta": ["treealign"]
+            },
+            "treealign_args": {
+                "type": "string",
+                "description": "the treealign arguments from params.treealign_args",
+                "meta": ["treealign_args"]
+            },
+            "msa": {
+                "type": "string",
+                "format": "file-path",
+                "pattern": "^\\S+\\.aln$",
+                "description": "aln file containing the MSA",
+                "errorMessage": "Must end with .aln",
+                "meta": ["msa"]
+            },
+            "reference": {
+                "type": "string",
+                "format": "file-path",
+                "meta": ["reference"]
+            },
+            "structures": {
+                "type": "string",
+                "format": "file-path",
+                "meta": ["structures"]
+            }
+        },
+        "anyOf": [{ "required": ["id", "msa"] }, { "required": ["id", "structures"] }]
+    }
+}

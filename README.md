@@ -54,24 +54,6 @@ Each row represents a set of sequences (in this case the seatoxin and toxin prot
 > [!NOTE]
 > The only required input is the id column and either fasta or structures.
 
-#### 2. TOOLSHEET
-
-Each line of the toolsheet defines a combination of guide tree and multiple sequence aligner to run with the respective arguments to be used.
-
-It should look at follows:
-
-`toolsheet.csv`:
-
-```csv
-tree,args_tree,aligner,args_aligner,
-FAMSA, -gt upgma -medoidtree, FAMSA,
-, ,TCOFFEE,
-FAMSA,,REGRESSIVE,
-```
-
-> [!NOTE]
-> The only required input is aligner.
-
 #### 3. RUN THE PIPELINE
 
 Now, you can run the pipeline using:
@@ -80,7 +62,6 @@ Now, you can run the pipeline using:
 nextflow run nf-core/multiplesequencealign \
    -profile test \
    --input samplesheet.csv \
-   --tools toolsheet.csv \
    --outdir outdir
 ```
 
