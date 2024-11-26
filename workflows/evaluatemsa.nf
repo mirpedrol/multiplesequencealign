@@ -12,6 +12,8 @@ include { CSVTK_JOIN as MERGE_STATS_EVAL } from '../modules/nf-core/csvtk/join/m
 
 //SUBWORKFLOWS
 include { EVALUATE               } from '../subworkflows/local/evaluate'
+include { EXTRACT_STRUCTURES     } from '../subworkflows/local/extract_structures/main'
+
 
 // FUNCTIONS
 include { paramsSummaryMap       } from 'plugin/nf-schema'
@@ -47,7 +49,6 @@ workflow EVALUATEMSA {
             "treealign": it.treealign ?: "", "treealign_args": it.treealign_args ?: ""],
             it.msa, it.reference, it.structures]
         }
-        .groupTuple(by: [0,1,2])
         .multiMap { meta, msa, reference, structures ->
             msa: [meta, msa]
             reference: [meta, reference]
@@ -55,11 +56,28 @@ workflow EVALUATEMSA {
         }
         .set { ch_input_multi }
 
+    ch_input_multi.reference
+        .filter { meta, ref ->
+            ref.size() > 0
+        }
+        .set { ch_reference }
+    ch_input_multi.structures
+        .filter { meta, structure ->
+            structure.size() > 0
+        }
+        .set { ch_structures_tar }
+
+    // ----------------
+    // STRUCTURES
+    // ----------------
+    EXTRACT_STRUCTURES(ch_structures_tar)
+    def ch_structures = EXTRACT_STRUCTURES.out.structures
+
     //
     // Evaluate the quality of the alignment
     //
     if (!params.skip_eval) {
-        EVALUATE (ch_input_multi.msa, ch_input_multi.reference, ch_input_multi.structures)
+        EVALUATE (ch_input_multi.msa, ch_reference, ch_structures)
         ch_versions        = ch_versions.mix(EVALUATE.out.versions)
         evaluation_summary = evaluation_summary.mix(EVALUATE.out.eval_summary)
     }

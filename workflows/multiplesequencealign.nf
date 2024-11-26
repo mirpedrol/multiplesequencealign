@@ -29,6 +29,7 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_mult
 include { STATS                            } from '../subworkflows/local/stats'
 include { CREATE_TCOFFEETEMPLATE           } from '../modules/local/create_tcoffee_template'
 include { GENERATE_DOWNSTREAM_SAMPLESHEETS } from '../subworkflows/local/generate_downstream_samplesheet/main'
+include { EXTRACT_STRUCTURES               } from '../subworkflows/local/extract_structures/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,7 +111,7 @@ workflow MULTIPLESEQUENCEALIGN {
         .filter { meta, structure ->
             structure.size() > 0
         }
-        .set { ch_structures }
+        .set { ch_structures_tar }
     ch_input_multi.templates
         .filter { meta, template ->
             template.size() > 0
@@ -120,23 +121,8 @@ workflow MULTIPLESEQUENCEALIGN {
     // ----------------
     // STRUCTURES
     // ----------------
-    // Structures are taken from a directory of PDB files.
-    // If the directory is compressed, it is uncompressed first.
-    ch_structures
-        .branch { structures ->
-            compressed:   structures[1].name.endsWith('.tar.gz')
-            uncompressed: true
-        }
-        .set { ch_structures }
-
-    UNTAR (ch_structures.compressed)
-        .untar
-        .mix(ch_structures.uncompressed)
-        .map {
-            meta,dir ->
-                [ meta,file(dir).listFiles().collect() ]
-        }
-        .set { ch_structures }
+    EXTRACT_STRUCTURES(ch_structures_tar)
+    ch_structures = EXTRACT_STRUCTURES.out.structures
 
     // ----------------
     // TEMPLATES
@@ -243,7 +229,7 @@ workflow MULTIPLESEQUENCEALIGN {
     GENERATE_DOWNSTREAM_SAMPLESHEETS (
         msa_alignment,
         ch_refs,
-        ch_structures,
+        ch_structures_tar,
         stats_summary,
         outdir
     )

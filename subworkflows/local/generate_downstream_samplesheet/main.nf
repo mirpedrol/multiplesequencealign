@@ -10,7 +10,7 @@ workflow SAMPLESHEET_EVALUATION {
     take:
     ch_msa        // channel: [ meta, /path/to/file.aln ]
     ch_references // channel: [ meta, /path/to/file.aln ]
-    ch_structures // channel: [ meta, /path/to/file.pdb ]
+    ch_structures // channel: [ meta, /path/to/file.tar ]
     outdir        // params.outdir
 
     main:
@@ -21,45 +21,35 @@ workflow SAMPLESHEET_EVALUATION {
         ch_existing_samplesheet = Channel.fromList(samplesheetToList(samplesheet, "${projectDir}/assets/schema_evaluate.json"))
             .flatten()
             .map { it  ->
-                if (it.reference) {
-                    [id: it.id,
-                    alignment:it.alignment, alignment_args:it.alignment_args,
-                    guidetree:it.guidetree, guidetree_args:it.guidetree_args,
-                    treealign:it.treealign, treealign_args:it.treealign_args,
-                    msa: it.msa, reference: it.reference.toUri(), structures: it.structures]
-                } else {
-                    [id: it.id,
-                    alignment:it.alignment, alignment_args:it.alignment_args,
-                    guidetree:it.guidetree, guidetree_args:it.guidetree_args,
-                    treealign:it.treealign, treealign_args:it.treealign_args,
-                    msa: it.msa, reference: it.reference, structures: it.structures]
-                }
+                // convert reference and structures to URI string
+                [id: it.id,
+                alignment:it.alignment, alignment_args:it.alignment_args,
+                guidetree:it.guidetree, guidetree_args:it.guidetree_args,
+                treealign:it.treealign, treealign_args:it.treealign_args,
+                msa: it.msa, reference: it.reference ? it.reference.toUri() : it.reference, structures: it.structures ? it.structures.toUri() : it.structures]
             }
     }
     // Create a channel with the new values for the samplesheet
-    def ch_intermediate = ch_msa
+    def ch_info_for_samplesheet = ch_msa
         .join(ch_references, by: 0, remainder: true)
         .join(ch_structures, by: 0, remainder: true)
-        .branch { meta, msa, reference, structures ->
-            structures: structures != null
-            no_structures: true
-        }
-    ch_intermediate.structures
-        .flatMap { meta, msa, reference, structures ->
-            structures.collect { structure ->
-                meta + [msa: msa, reference: reference.toUri(), structures: structure]
-            }
-        }
-        .set { ch_intermediate_structures }
-    ch_intermediate.no_structures
         .map { meta, msa, reference, structures ->
-            meta + [msa: msa, reference: reference.toUri(), structures: null]
+            // If the path changes, make sure to change the publishDir from alignment or treealign modules in modules.config
+            def path_msa = ""
+            if (params.alignment) {
+                path_msa = "${meta.alignment}_${meta.alignment_args}/"
+            } else {
+                path_msa = "${meta.treealign}_${meta.treealign_args}_${meta.guidetree}_${meta.guidetree_args}/"
+            }
+            meta + [
+                    msa: file(file(params.outdir).toString() + "/alignment/" + path_msa + msa.getName()),
+                    reference: reference ? reference.toUri() : reference,
+                    structures: structures ? structures.toUri() : structures
+                ]
         }
-        .set { ch_intermediate_no_structures }
     // Join both channels
     ch_existing_samplesheet
-        .mix(ch_intermediate_structures)
-        .mix(ch_intermediate_no_structures)
+        .mix(ch_info_for_samplesheet)
         .unique()
         .set { ch_list_for_samplesheet }
 
@@ -82,7 +72,7 @@ workflow SAMPLESHEET_STATS {
     // Create a channel with the new values for the samplesheet
     def ch_info_for_samplesheet = stats_summary
         .map { meta, csv ->
-            // If the path chanes, make sure to change the publishDir from MERGE_STATS in modules.config
+            // If the path changes, make sure to change the publishDir from MERGE_STATS in modules.config
             [id: meta.id, stats: file(file(params.outdir).toString() + "/stats/" + csv.getName())]
         }
     // Join both channels
@@ -104,7 +94,7 @@ workflow GENERATE_DOWNSTREAM_SAMPLESHEETS {
     take:
     evaluation_msa        // channel: [ meta, /path/to/file.aln ]
     evaluation_references // channel: [ meta, /path/to/file.aln ]
-    evaluation_structures // channel: [ meta, /path/to/file.pdb ]
+    evaluation_structures // channel: [ meta, /path/to/file.tar ]
     stats_summary         // channel: [ meta, /path/to/file.csv ]
     outdir                // params.outdir
 

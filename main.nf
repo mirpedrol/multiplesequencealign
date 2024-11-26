@@ -102,7 +102,9 @@ workflow {
     def ch_multiqc_report = Channel.empty()
 
     if (params.evaluate) {
+        //
         // WORKFLOW: Run evaluation workflow
+        //
         NFCORE_EVALUATEMSA (
             "${params.outdir}/downstream_samplesheets/evaluation.csv",
             "${params.outdir}/downstream_samplesheets/stats.csv",
