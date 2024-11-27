@@ -1,0 +1,41 @@
+name: Update class subworkflows
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # Run every day at midnight
+  workflow_dispatch:
+
+jobs:
+  update_modules:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5
+        with:
+          python-version: "3.x"
+
+      - name: Install nf-core
+        run: pip install nf-core
+
+      - name: Update subworkflows
+        run: nf-core subworkflows --git-remote https://github.com/mirpedrol/class-modules.git update --all --no-preview --update-deps
+
+      # Commit the changes
+      - name: Commit changes
+        run: |
+          git config user.email "mirp.julia@gmail.com"
+          git config user.name "mirpedrol"
+          git add .
+          git status
+          git commit -m "[automated] Update class subworkflows"
+
+      # Open a new PR to dev with the changes
+      - name: Create PR
+        run: |
+          git checkout -b automated-update-class-subworkflows
+          git push origin automated-update-class-subworkflows
+          gh pr create --title "Update class subworkflows" --body "This PR updates the class subworkflows form the mirpedrol/class-modules repo" --base poc-classes --head automated-update-class-subworkflows
