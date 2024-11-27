@@ -11,7 +11,7 @@ process KALIGN_ALIGN {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("*.aln"), emit: alignment
+    tuple val(meta), path("*.aln.gz"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -24,7 +24,7 @@ process KALIGN_ALIGN {
     unpigz -cdf $fasta | \\
     kalign \\
         $args \\
-        -o ${prefix}.aln
+        -o >(pigz -cp ${task.cpus} > ${prefix}.aln.gz)
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -37,7 +37,7 @@ process KALIGN_ALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln
+    touch ${prefix}.aln.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

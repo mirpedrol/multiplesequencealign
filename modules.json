@@ -37,7 +37,7 @@
                     },
                     "kalign/align": {
                         "branch": "main",
-                        "git_sha": "caf37f3ee943a8101000b25ba502f038f8bfeb87",
+                        "git_sha": "34e891b859086dd03e52e79abcf47b3863fcb3cb",
                         "installed_by": ["msa_alignment"]
                     },
                     "learnmsa/align": {
