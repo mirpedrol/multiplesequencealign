@@ -12,7 +12,7 @@ process MAGUS_TREEALIGN {
     tuple val(meta2), path(tree)
 
     output:
-    tuple val(meta), path("*.aln"), emit: alignment
+    tuple val(meta), path("*.aln.gz"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -29,7 +29,7 @@ process MAGUS_TREEALIGN {
         -np $task.cpus \\
         -i $fasta \\
         -d ./ \\
-        -o ${prefix}.aln \\
+        --overwrite -o >(pigz -cp ${task.cpus} > ${prefix}.aln.gz) \\
         -t $tree \\
         $args
 
@@ -44,7 +44,7 @@ process MAGUS_TREEALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln
+    echo "" | gzip > ${prefix}.aln.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

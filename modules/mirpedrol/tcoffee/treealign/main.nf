@@ -12,7 +12,7 @@ process TCOFFEE_TREEALIGN {
     tuple val(meta2),  path(tree)
 
     output:
-    tuple val(meta), path("*.aln"), emit: alignment
+    tuple val(meta), path("*.aln.gz"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -28,7 +28,16 @@ process TCOFFEE_TREEALIGN {
         -output fasta_aln \
         $args \
         -thread ${task.cpus} \
-        -outfile ${prefix}.aln
+        -outfile stdout \
+        | pigz -cp ${task.cpus} > ${prefix}.aln.gz
+
+    # If stdout file exist, then compress the file
+    # This is a patch for the current behaviour of the regressive algorithm
+    # that does not support the stdout redirection
+    if [ -f stdout ]; then
+        pigz -cp ${task.cpus} < stdout > ${prefix}.aln.gz
+        rm stdout
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -40,7 +49,7 @@ process TCOFFEE_TREEALIGN {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln
+    touch ${prefix}.aln.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
