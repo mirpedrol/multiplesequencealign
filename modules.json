@@ -128,7 +128,7 @@
                     },
                     "tcoffee/alncompare": {
                         "branch": "master",
-                        "git_sha": "faf557ba56156ac0e5de76a25c1e3df11c944f59",
+                        "git_sha": "ffa000ab3c33df25a165b5f9a039c4cbb665a77b",
                         "installed_by": ["modules"]
                     },
                     "tcoffee/irmsd": {
