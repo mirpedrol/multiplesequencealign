@@ -14,7 +14,7 @@ process FAMSA_TREEALIGN {
     tuple val(meta2), path(tree)
 
     output:
-    tuple val(meta), path("*.aln"), emit: alignment
+    tuple val(meta), path("*.aln.gz"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -24,12 +24,12 @@ process FAMSA_TREEALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    famsa import $tree \\
+    famsa -gt import $tree \\
         -gz \\
         $args \\
         -t ${task.cpus} \\
         ${fasta} \\
-        ${prefix}.aln
+        ${prefix}.aln.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -40,7 +40,7 @@ process FAMSA_TREEALIGN {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln
+    touch ${prefix}.aln.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/mirpedrol/class-modules/main/modules/yaml-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mirpedrol/class-modules/main/modules/meta-schema.json
 name: "magus_guidetree"
 description: Multiple Sequence Alignment using Graph Clustering
 keywords:
@@ -28,7 +28,7 @@ input:
     - fasta:
         type: file
         description: Input sequences in FASTA format.
-        pattern: "*.{fa,fna,fasta}"
+        pattern: "*.{fa,fasta}"
         ontologies:
           - edam: http://edamontology.org/format_1929
 output:
@@ -41,7 +41,7 @@ output:
       - "*.dnd":
           type: file
           description: File containing the output guidetree, in newick format.
-          pattern: "*.dnd"
+          pattern: "*.{dnd}"
   - versions:
       - versions.yml:
           type: file

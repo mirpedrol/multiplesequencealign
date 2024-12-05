@@ -79,7 +79,7 @@
             "description": "Parameters to select which tools to use",
             "default": "",
             "fa_icon": "fas fa-tools",
-            "oneOf": [{"required": ["alignment"]}, {"required": ["guidetree", "treealign"]}],
+            "oneOf": [{ "required": ["alignment"] }, { "required": ["guidetree", "treealign"] }],
             "properties": {
                 "alignment": {
                     "type": "string",

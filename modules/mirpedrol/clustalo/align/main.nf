@@ -11,7 +11,7 @@ process CLUSTALO_ALIGN {
     tuple val(meta) , path(fasta)
 
     output:
-    tuple val(meta), path("*.aln"), emit: alignment
+    tuple val(meta), path("*.aln.gz"), emit: alignment
     path "versions.yml"              , emit: versions
 
     when:
@@ -30,7 +30,7 @@ process CLUSTALO_ALIGN {
         -i ${fasta} \
         --threads=${task.cpus} \
         $args \
-        > ${prefix}.aln
+        --force -o >(pigz -cp ${task.cpus} > ${prefix}.aln.gz)
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -43,7 +43,7 @@ process CLUSTALO_ALIGN {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.aln
+    touch ${prefix}.aln.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
