@@ -13,7 +13,7 @@
                     "clustalo/guidetree": {
                         "branch": "main",
                         "git_sha": "c9e7bf0f32e3867e1b208b03ca69acb086ff97ca",
-                        "installed_by": ["msa_guidetree"]
+                        "installed_by": ["modules", "msa_guidetree"]
                     },
                     "clustalo/treealign": {
                         "branch": "main",
