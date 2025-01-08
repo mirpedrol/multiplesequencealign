@@ -24,8 +24,14 @@ jobs:
       - name: Update subworkflows
         run: nf-core subworkflows --git-remote https://github.com/mirpedrol/class-modules.git update --all --no-preview --update-deps
 
+      - name: Check if there are changes
+        run: |
+          git diff --exit-code ${GITHUB_WORKSPACE} || echo "changed=YES" >> $GITHUB_ENV
+          echo "Files changed: ${{ env.changed }}"
+
       # Commit the changes
       - name: Commit changes
+        if: env.changed == 'YES'
         run: |
           git config user.email "mirp.julia@gmail.com"
           git config user.name "mirpedrol"
@@ -35,6 +41,7 @@ jobs:
 
       # Open a new PR to dev with the changes
       - name: Create PR
+        if: env.changed == 'YES'
         run: |
           git checkout -b automated-update-class-subworkflows
           git push origin automated-update-class-subworkflows
