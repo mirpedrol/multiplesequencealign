@@ -7,31 +7,43 @@
     "items": {
         "type": "object",
         "properties": {
-            "tree": {
+            "guidetree": {
                 "type": "string",
                 "pattern": "^\\S+$",
                 "errorMessage": "tree name cannot contain spaces",
-                "meta": ["tree"],
+                "meta": ["guidetree"],
                 "default": ""
             },
-            "args_tree": {
+            "args_guidetree": {
                 "type": "string",
-                "meta": ["args_tree"],
+                "meta": ["args_guidetree"],
                 "default": ""
             },
-            "aligner": {
+            "treealign": {
                 "type": "string",
-                "meta": ["aligner"],
+                "meta": ["treealign"],
                 "pattern": "^\\S+$",
                 "errorMessage": "align name must be provided and cannot contain spaces",
                 "default": ""
             },
-            "args_aligner": {
+            "args_treealign": {
                 "type": "string",
-                "meta": ["args_aligner"],
+                "meta": ["args_treealign"],
+                "default": ""
+            },
+            "alignment": {
+                "type": "string",
+                "meta": ["alignment"],
+                "pattern": "^\\S+$",
+                "errorMessage": "align name must be provided and cannot contain spaces",
+                "default": ""
+            },
+            "args_alignment": {
+                "type": "string",
+                "meta": ["args_alignment"],
                 "default": ""
             }
         },
-        "required": ["aligner"]
+        "oneOf": [{ "required": ["alignment"] }, { "required": ["guidetree", "treealign"] }]
     }
 }

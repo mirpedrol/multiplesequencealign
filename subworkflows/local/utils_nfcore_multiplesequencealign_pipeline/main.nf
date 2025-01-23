@@ -76,8 +76,8 @@ workflow PIPELINE_INITIALISATION {
                         def align_map = [:]
 
                         tree_map["tree"] = Utils.clean_tree(meta_clone["tree"])
-                        tree_map["args_tree"] = meta_clone["args_tree"]
-                        tree_map["args_tree_clean"] = Utils.cleanArgs(meta_clone.args_tree)
+                        tree_map["args_guidetree"] = meta_clone["args_guidetree"]
+                        tree_map["args_guidetree_clean"] = Utils.cleanArgs(meta_clone.args_guidetree)
 
                         align_map["aligner"] = meta_clone["aligner"]
                         align_map["args_aligner"] = Utils.check_required_args(meta_clone["aligner"], meta_clone["args_aligner"])
@@ -620,7 +620,7 @@ def merge_summary_and_traces(summary_file, trace_dir_path, outFileName, shinyOut
     // -------------------
     def mergedData = []
     data.each { row ->
-        def treeMatch = trace_file.traceTrees.find { it.id == row.id && it.tree == row.tree && it.args_tree_clean == row.args_tree_clean}
+        def treeMatch = trace_file.traceTrees.find { it.id == row.id && it.tree == row.tree && it.args_guidetree_clean == row.args_guidetree_clean}
         def alignMatch = trace_file.traceAlign.find { it.id == row.id && it.aligner == row.aligner && it.args_aligner_clean == row.args_aligner_clean}
         def mergedRow = row + (treeMatch ?: [:]) + (alignMatch ?: [:])
         mergedData << mergedRow

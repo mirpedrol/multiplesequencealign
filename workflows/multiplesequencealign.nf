@@ -19,7 +19,6 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_mult
 // SUBWORKFLOW: Local subworkflows
 //
 include { STATS                  } from '../subworkflows/local/stats'
-include { ALIGN                  } from '../subworkflows/local/align'
 include { EVALUATE               } from '../subworkflows/local/evaluate'
 include { TEMPLATES              } from '../subworkflows/local/templates'
 include { PREPROCESS             } from '../subworkflows/local/preprocess'
@@ -45,6 +44,16 @@ include { UNTAR                          } from '../modules/nf-core/untar/main'
 include { CSVTK_JOIN as MERGE_STATS_EVAL } from '../modules/nf-core/csvtk/join/main.nf'
 include { PIGZ_COMPRESS                  } from '../modules/nf-core/pigz/compress/main'
 include { FASTAVALIDATOR                 } from '../modules/nf-core/fastavalidator/main'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT CLASS-MODULES MODULES/SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+include { MSA_ALIGNMENT } from '../subworkflows/mirpedrol/msa_alignment/main'
+include { MSA_GUIDETREE } from '../subworkflows/mirpedrol/msa_guidetree/main'
+include { MSA_TREEALIGN } from '../subworkflows/mirpedrol/msa_treealign/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,20 +215,78 @@ workflow MULTIPLESEQUENCEALIGN {
         stats_summary = stats_summary.mix(STATS.out.stats_summary)
     }
 
+    ch_tools
+        .multiMap {
+            it ->
+                guidetree: [it[0], it[1]]
+                alignment: [it[2], it[3]]
+        }
+        .set { ch_tools_split }
+
+    ch_seqs
+        .combine(ch_tools)
+        // Add tools and arguments to the meta
+        .multiMap {
+            meta, fasta, guidetree, args_guidetree, treealign, args_treealign, alignment, args_alignment ->
+                guidetree: [ meta + ["guidetree":guidetree, "args_guidetree":args_guidetree], fasta, guidetree]
+                alignment: [ meta + ["alignment":alignment, "args_alignment":args_alignment], fasta, alignment]
+        }
+        .set { ch_fasta_tools }
+
+    ch_fasta_tools.guidetree
+        .filter{ it -> it[0].guidetree }
+        .unique()
+        .set { ch_fasta_guidetree }
+    ch_fasta_tools.alignment
+        .filter{ it -> it[0].alignment }
+        .unique()
+        .set { ch_fasta_alignment }
+
+    //
+    // Compute tree
+    //
+    MSA_GUIDETREE (ch_fasta_guidetree)
+    ch_versions = ch_versions.mix(MSA_GUIDETREE.out.versions)
+
+    ch_seqs
+        .combine(MSA_GUIDETREE.out.tree, by:0) // combine by meta ID
+        .map { meta, fasta, tree -> [ meta.guidetree, meta, fasta, tree ] }
+        .combine(ch_tools, by: 0) // combine by guidetree
+        .map {
+            guidetree, meta, fasta, tree, args_guidetree, treealign, args_treealign, alignment, args_alignment ->
+                [meta + ["treealign":treealign, "args_treealign":args_treealign], fasta, tree, treealign]
+        }
+        .multiMap {
+            meta, fasta, tree, treealign ->
+                fastas: [ meta, fasta, treealign ]
+                trees: [ meta, tree, treealign ]
+        }
+        .set { ch_tree_treealign }
+
+    ch_alignment_output = Channel.empty()
+
+    //
+    // Align with a given tree
+    //
+    MSA_TREEALIGN (
+        ch_tree_treealign.fastas,
+        ch_tree_treealign.trees
+    )
+    ch_versions = ch_versions.mix(MSA_TREEALIGN.out.versions)
+    ch_alignment_output = ch_alignment_output.mix(MSA_TREEALIGN.out.alignment)
+
+
     //
     // Align
     //
     compress_during_align = !(params.skip_compression || (!params.skip_eval || params.build_consensus))
-    ALIGN (
-        ch_seqs,
-        ch_tools,
-        ch_optional_data_template,
-        compress_during_align
-    )
-    ch_versions = ch_versions.mix(ALIGN.out.versions)
+
+    MSA_ALIGNMENT ( ch_fasta_alignment )
+    ch_versions = ch_versions.mix(MSA_ALIGNMENT.out.versions)
+    ch_alignment_output = ch_alignment_output.mix(MSA_ALIGNMENT.out.alignment)
 
     if (!params.skip_compression && !compress_during_align) {
-        PIGZ_COMPRESS (ALIGN.out.msa)
+        PIGZ_COMPRESS (ch_alignment_output)
         ch_versions = ch_versions.mix(PIGZ_COMPRESS.out.versions)
     }
 
@@ -227,7 +294,7 @@ workflow MULTIPLESEQUENCEALIGN {
     // Evaluate the quality of the alignment
     //
     if (!params.skip_eval) {
-        EVALUATE (ALIGN.out.msa, ch_refs, ch_optional_data_template)
+        EVALUATE (ch_alignment_output, ch_refs, ch_optional_data_template)
         ch_versions        = ch_versions.mix(EVALUATE.out.versions)
         evaluation_summary = evaluation_summary.mix(EVALUATE.out.eval_summary)
     }
@@ -262,8 +329,8 @@ workflow MULTIPLESEQUENCEALIGN {
 
     if (!params.skip_visualisation) {
         VISUALIZATION (
-            ALIGN.out.msa,
-            ALIGN.out.trees,
+            ch_alignment_output,
+            MSA_GUIDETREE.out.tree,
             ch_optional_data
         )
     }
