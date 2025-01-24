@@ -75,13 +75,17 @@ workflow PIPELINE_INITIALISATION {
                         def tree_map = [:]
                         def align_map = [:]
 
-                        tree_map["tree"] = Utils.clean_tree(meta_clone["tree"])
-                        tree_map["args_tree"] = meta_clone["args_tree"]
-                        tree_map["args_tree_clean"] = Utils.cleanArgs(meta_clone.args_tree)
+                        tree_map["guidetree"] = Utils.clean_tree(meta_clone["guidetree"])
+                        tree_map["args_guidetree"] = meta_clone["args_guidetree"]
+                        tree_map["args_guidetree_clean"] = Utils.cleanArgs(meta_clone.args_guidetree)
 
-                        align_map["aligner"] = meta_clone["aligner"]
-                        align_map["args_aligner"] = Utils.check_required_args(meta_clone["aligner"], meta_clone["args_aligner"])
-                        align_map["args_aligner_clean"] = Utils.cleanArgs(meta_clone.args_aligner)
+                        tree_map["treealign"] = Utils.clean_tree(meta_clone["treealign"])
+                        tree_map["args_treealign"] = meta_clone["args_treealign"]
+                        tree_map["args_treealign_clean"] = Utils.cleanArgs(meta_clone.args_treealign)
+
+                        align_map["alignment"] = meta_clone["alignment"]
+                        align_map["args_alignment"] = Utils.check_required_args(meta_clone["alignment"], meta_clone["args_alignment"])
+                        align_map["args_alignment_clean"] = Utils.cleanArgs(meta_clone.args_alignment)
 
                         [ tree_map, align_map ]
                 }.unique()
@@ -140,11 +144,11 @@ workflow PIPELINE_COMPLETION {
         def summary_file = "${outdir}/summary/complete_summary_stats_eval.csv"
         def summary_file_with_traces = "${outdir}/summary/complete_summary_stats_eval_times.csv"
         def trace_dir_path = "${outdir}/pipeline_info/"
-        if (shiny_trace_mode) {
-            merge_summary_and_traces(summary_file, trace_dir_path, summary_file_with_traces, "${shiny_dir_path}/complete_summary_stats_eval_times.csv")
-        }else{
-            merge_summary_and_traces(summary_file, trace_dir_path, summary_file_with_traces, "")
-        }
+        //if (shiny_trace_mode) {
+        //    merge_summary_and_traces(summary_file, trace_dir_path, summary_file_with_traces, "${shiny_dir_path}/complete_summary_stats_eval_times.csv")
+        //}else{
+        //    merge_summary_and_traces(summary_file, trace_dir_path, summary_file_with_traces, "")
+        //}
     }
 
     workflow.onError {
@@ -620,7 +624,7 @@ def merge_summary_and_traces(summary_file, trace_dir_path, outFileName, shinyOut
     // -------------------
     def mergedData = []
     data.each { row ->
-        def treeMatch = trace_file.traceTrees.find { it.id == row.id && it.tree == row.tree && it.args_tree_clean == row.args_tree_clean}
+        def treeMatch = trace_file.traceTrees.find { it.id == row.id && it.tree == row.tree && it.args_guidetree_clean == row.args_guidetree_clean}
         def alignMatch = trace_file.traceAlign.find { it.id == row.id && it.aligner == row.aligner && it.args_aligner_clean == row.args_aligner_clean}
         def mergedRow = row + (treeMatch ?: [:]) + (alignMatch ?: [:])
         mergedData << mergedRow

@@ -24,10 +24,10 @@ except:
 def merge_tree_args(row):
     if str(row["tree"]) == "DEFAULT":
         return "None"
-    elif str(row["args_tree"]) == "default":
+    elif str(row["args_guidetree"]) == "default":
         return str(row["tree"]) + " ()"
     else:
-        return str(row["tree"]) + " (" + str(row["args_tree"]) + ")"
+        return str(row["tree"]) + " (" + str(row["args_guidetree"]) + ")"
 
 inputfile["tree_args"] = inputfile.apply(merge_tree_args, axis=1)
 

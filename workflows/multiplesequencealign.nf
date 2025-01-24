@@ -19,7 +19,6 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_mult
 // SUBWORKFLOW: Local subworkflows
 //
 include { STATS                  } from '../subworkflows/local/stats'
-include { ALIGN                  } from '../subworkflows/local/align'
 include { EVALUATE               } from '../subworkflows/local/evaluate'
 include { TEMPLATES              } from '../subworkflows/local/templates'
 include { PREPROCESS             } from '../subworkflows/local/preprocess'
@@ -48,6 +47,16 @@ include { FASTAVALIDATOR                 } from '../modules/nf-core/fastavalidat
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT CLASS-MODULES MODULES/SUBWORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+include { MSA_ALIGNMENT } from '../subworkflows/mirpedrol/msa_alignment/main'
+include { MSA_GUIDETREE } from '../subworkflows/mirpedrol/msa_guidetree/main'
+include { MSA_TREEALIGN } from '../subworkflows/mirpedrol/msa_treealign/main'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
@@ -56,7 +65,7 @@ workflow MULTIPLESEQUENCEALIGN {
 
     take:
     ch_input    // channel: [ meta, path(sequence.fasta), path(reference.fasta), path(dependency_files.tar.gz), path(templates.txt) ]
-    ch_tools    // channel: [ val(guide_tree_tool), val(args_guide_tree_tool), val(alignment_tool), val(args_alignment_tool) ]
+    ch_tools    // channel: [ meta_guidetree_treealign, meta_alignment ]
 
     main:
     ch_multiqc_files             = Channel.empty()
@@ -206,20 +215,90 @@ workflow MULTIPLESEQUENCEALIGN {
         stats_summary = stats_summary.mix(STATS.out.stats_summary)
     }
 
+    ch_seqs
+        .combine(ch_tools)
+        // Add tools and arguments to the meta
+        .multiMap {
+            meta, fasta, meta_guidetree_treealign, meta_alignment ->
+                guidetree: [ meta + ["guidetree":meta_guidetree_treealign.guidetree, "args_guidetree":meta_guidetree_treealign.args_guidetree, "args_guidetree_clean":meta_guidetree_treealign.args_guidetree_clean], fasta, meta_guidetree_treealign.guidetree]
+                alignment: [ meta + ["alignment":meta_alignment.alignment, "args_alignment":meta_alignment.args_alignment, "args_alignment_clean":meta_alignment.args_alignment_clean], fasta, meta_alignment.alignment]
+        }
+        .set { ch_fasta_tools }
+
+    ch_fasta_tools.guidetree
+        .filter{ it -> it[0].guidetree }
+        .unique()
+        .set { ch_fasta_guidetree }
+    ch_fasta_tools.alignment
+        .filter{ it -> it[0].alignment }
+        .unique()
+        .set { ch_fasta_alignment }
+
+    ch_fasta_guidetree.dump( tag: 'ch_fasta_guidetree' )
+    ch_fasta_alignment.dump( tag: 'ch_fasta_alignment' )
+
+    //
+    // Compute tree
+    //
+    MSA_GUIDETREE (ch_fasta_guidetree)
+    ch_versions = ch_versions.mix(MSA_GUIDETREE.out.versions)
+
+    ch_seqs
+        .map { meta, fasta ->
+            [ meta.id, meta, fasta ]
+        }
+        .combine(
+                MSA_GUIDETREE.out.tree
+                    .map { meta, tree ->
+                        [ meta.id, meta, tree ]
+                    }
+                , by:0
+        ) // combine by meta ID
+        .map { meta_id, meta_fasta, fasta, meta_tree, tree ->
+            [ meta_tree.guidetree, meta_tree, fasta, tree ]
+        }
+        .combine(
+            ch_tools
+                .map { meta_guidetree_treealign, meta_alignment ->
+                    [ meta_guidetree_treealign.guidetree, meta_guidetree_treealign ]
+                }
+            , by: 0
+        ) // combine by guidetree
+        .map {
+            guidetree, meta, fasta, tree, meta_guidetree_treealign ->
+                [meta + ["treealign":meta_guidetree_treealign.treealign, "args_treealign":meta_guidetree_treealign.args_treealign, "args_treealign_clean":meta_guidetree_treealign.args_treealign_lean], fasta, tree, meta_guidetree_treealign.treealign]
+        }
+        .multiMap {
+            meta, fasta, tree, treealign ->
+                fastas: [ meta, fasta, treealign ]
+                trees: [ meta, tree, treealign ]
+        }
+        .set { ch_tree_treealign }
+
+    ch_alignment_output = Channel.empty()
+
+    //
+    // Align with a given tree
+    //
+    MSA_TREEALIGN (
+        ch_tree_treealign.fastas,
+        ch_tree_treealign.trees
+    )
+    ch_versions = ch_versions.mix(MSA_TREEALIGN.out.versions)
+    ch_alignment_output = ch_alignment_output.mix(MSA_TREEALIGN.out.alignment)
+
+
     //
     // Align
     //
     compress_during_align = !(params.skip_compression || (!params.skip_eval || params.build_consensus))
-    ALIGN (
-        ch_seqs,
-        ch_tools,
-        ch_optional_data_template,
-        compress_during_align
-    )
-    ch_versions = ch_versions.mix(ALIGN.out.versions)
+
+    MSA_ALIGNMENT ( ch_fasta_alignment )
+    ch_versions = ch_versions.mix(MSA_ALIGNMENT.out.versions)
+    ch_alignment_output = ch_alignment_output.mix(MSA_ALIGNMENT.out.alignment)
 
     if (!params.skip_compression && !compress_during_align) {
-        PIGZ_COMPRESS (ALIGN.out.msa)
+        PIGZ_COMPRESS (ch_alignment_output)
         ch_versions = ch_versions.mix(PIGZ_COMPRESS.out.versions)
     }
 
@@ -227,7 +306,7 @@ workflow MULTIPLESEQUENCEALIGN {
     // Evaluate the quality of the alignment
     //
     if (!params.skip_eval) {
-        EVALUATE (ALIGN.out.msa, ch_refs, ch_optional_data_template)
+        EVALUATE (ch_alignment_output, ch_refs, ch_optional_data_template)
         ch_versions        = ch_versions.mix(EVALUATE.out.versions)
         evaluation_summary = evaluation_summary.mix(EVALUATE.out.eval_summary)
     }
@@ -262,8 +341,8 @@ workflow MULTIPLESEQUENCEALIGN {
 
     if (!params.skip_visualisation) {
         VISUALIZATION (
-            ALIGN.out.msa,
-            ALIGN.out.trees,
+            ch_alignment_output,
+            MSA_GUIDETREE.out.tree,
             ch_optional_data
         )
     }

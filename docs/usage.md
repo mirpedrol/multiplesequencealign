@@ -131,14 +131,14 @@ Each line of the toolsheet defines a combination of guide tree and multiple sequ
 A typical toolsheet should look at follows:
 
 ```csv title="toolsheet.csv"
-tree,args_tree,aligner,args_aligner,
+tree,args_guidetree,aligner,args_aligner,
 FAMSA, -gt upgma -medoidtree, FAMSA,
 , ,TCOFFEE,
 FAMSA,,REGRESSIVE,
 ```
 
 :::note
-Each of the trees and aligners are available as standalones. You can leave `args_tree` and `args_aligner` empty if you are cool with the default settings of each method. Alternatively, you can leave `args_tree` empty to use the default guide tree with each aligner.
+Each of the trees and aligners are available as standalones. You can leave `args_guidetree` and `args_aligner` empty if you are cool with the default settings of each method. Alternatively, you can leave `args_guidetree` empty to use the default guide tree with each aligner.
 :::
 
 :::note
@@ -147,18 +147,18 @@ use the exact spelling as listed above in [align](#3-align) and [guide trees](#2
 
 `tree` is the tool used to build the tree (optional).
 
-Arguments to the tree tool can be provided using `args_tree`. Please refer to each tool's documentation (optional).
+Arguments to the tree tool can be provided using `args_guidetree`. Please refer to each tool's documentation (optional).
 
 The `aligner` column contains the tool to run the alignment (optional).
 
 Finally, the arguments to the aligner tool can be set by using the `args_aligner` column (optional).
 
-| Column         | Description                                                                      |
-| -------------- | -------------------------------------------------------------------------------- |
-| `tree`         | Optional. Tool used to build the tree.                                           |
-| `args_tree`    | Optional. Arguments to the tree tool. Please refer to each tool's documentation. |
-| `aligner`      | Required. Tool to run the alignment. Available options listed above.             |
-| `args_aligner` | Optional. Arguments to the alignment tool.                                       |
+| Column           | Description                                                                      |
+| ---------------- | -------------------------------------------------------------------------------- |
+| `tree`           | Optional. Tool used to build the tree.                                           |
+| `args_guidetree` | Optional. Arguments to the tree tool. Please refer to each tool's documentation. |
+| `aligner`        | Required. Tool to run the alignment. Available options listed above.             |
+| `args_aligner`   | Optional. Arguments to the alignment tool.                                       |
 
 ## Running the pipeline
 

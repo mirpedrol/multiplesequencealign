@@ -63,14 +63,14 @@ Each row represents a set of sequences (in this case the seatoxin and toxin prot
 
 The toolsheet specifies **which combination of tools will be deployed and benchmark in the pipeline**.
 Each line of the toolsheet defines a combination of guide tree and multiple sequence aligner to run with the respective arguments to be used.
-The only required field is `aligner`. The fields `tree`, `args_tree` and `args_aligner` are optional and can be left empty.
+The only required field is `aligner`. The fields `tree`, `args_guidetree` and `args_aligner` are optional and can be left empty.
 
 It should look at follows:
 
 `toolsheet.csv`:
 
 ```csv
-tree,args_tree,aligner,args_aligner,
+tree,args_guidetree,aligner,args_aligner,
 FAMSA, -gt upgma -medoidtree, FAMSA,
 , ,TCOFFEE,
 FAMSA,,REGRESSIVE,
