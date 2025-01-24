@@ -65,7 +65,7 @@ workflow MULTIPLESEQUENCEALIGN {
 
     take:
     ch_input    // channel: [ meta, path(sequence.fasta), path(reference.fasta), path(dependency_files.tar.gz), path(templates.txt) ]
-    ch_tools    // channel: [ val(guide_tree_tool), val(args_guide_tree_tool), val(alignment_tool), val(args_alignment_tool) ]
+    ch_tools    // channel: [ meta_guidetree_treealign, meta_alignment ]
 
     main:
     ch_multiqc_files             = Channel.empty()
@@ -215,21 +215,13 @@ workflow MULTIPLESEQUENCEALIGN {
         stats_summary = stats_summary.mix(STATS.out.stats_summary)
     }
 
-    ch_tools
-        .multiMap {
-            it ->
-                guidetree: [it[0], it[1]]
-                alignment: [it[2], it[3]]
-        }
-        .set { ch_tools_split }
-
     ch_seqs
         .combine(ch_tools)
         // Add tools and arguments to the meta
         .multiMap {
-            meta, fasta, guidetree, args_guidetree, treealign, args_treealign, alignment, args_alignment ->
-                guidetree: [ meta + ["guidetree":guidetree, "args_guidetree":args_guidetree], fasta, guidetree]
-                alignment: [ meta + ["alignment":alignment, "args_alignment":args_alignment], fasta, alignment]
+            meta, fasta, meta_guidetree_treealign, meta_alignment ->
+                guidetree: [ meta + ["guidetree":meta_guidetree_treealign.guidetree, "args_guidetree":meta_guidetree_treealign.args_guidetree, "args_guidetree_clean":meta_guidetree_treealign.args_guidetree_clean], fasta, meta_guidetree_treealign.guidetree]
+                alignment: [ meta + ["alignment":meta_alignment.alignment, "args_alignment":meta_alignment.args_alignment, "args_alignment_clean":meta_alignment.args_alignment_clean], fasta, meta_alignment.alignment]
         }
         .set { ch_fasta_tools }
 
@@ -242,6 +234,9 @@ workflow MULTIPLESEQUENCEALIGN {
         .unique()
         .set { ch_fasta_alignment }
 
+    ch_fasta_guidetree.dump( tag: 'ch_fasta_guidetree' )
+    ch_fasta_alignment.dump( tag: 'ch_fasta_alignment' )
+
     //
     // Compute tree
     //
@@ -249,12 +244,29 @@ workflow MULTIPLESEQUENCEALIGN {
     ch_versions = ch_versions.mix(MSA_GUIDETREE.out.versions)
 
     ch_seqs
-        .combine(MSA_GUIDETREE.out.tree, by:0) // combine by meta ID
-        .map { meta, fasta, tree -> [ meta.guidetree, meta, fasta, tree ] }
-        .combine(ch_tools, by: 0) // combine by guidetree
+        .map { meta, fasta ->
+            [ meta.id, meta, fasta ]
+        }
+        .combine(
+                MSA_GUIDETREE.out.tree
+                    .map { meta, tree ->
+                        [ meta.id, meta, tree ]
+                    }
+                , by:0
+        ) // combine by meta ID
+        .map { meta_id, meta_fasta, fasta, meta_tree, tree ->
+            [ meta_tree.guidetree, meta_tree, fasta, tree ]
+        }
+        .combine(
+            ch_tools
+                .map { meta_guidetree_treealign, meta_alignment ->
+                    [ meta_guidetree_treealign.guidetree, meta_guidetree_treealign ]
+                }
+            , by: 0
+        ) // combine by guidetree
         .map {
-            guidetree, meta, fasta, tree, args_guidetree, treealign, args_treealign, alignment, args_alignment ->
-                [meta + ["treealign":treealign, "args_treealign":args_treealign], fasta, tree, treealign]
+            guidetree, meta, fasta, tree, meta_guidetree_treealign ->
+                [meta + ["treealign":meta_guidetree_treealign.treealign, "args_treealign":meta_guidetree_treealign.args_treealign, "args_treealign_clean":meta_guidetree_treealign.args_treealign_lean], fasta, tree, meta_guidetree_treealign.treealign]
         }
         .multiMap {
             meta, fasta, tree, treealign ->
