@@ -1,0 +1,51 @@
+nextflow_workflow {
+
+    name "Test Subworkflow MSA_STRUCTURAL_ALIGNMENT"
+    script "../main.nf"
+    workflow "MSA_STRUCTURAL_ALIGNMENT"
+
+    tag "subworkflows"
+    tag "subworkflows_mirpedrol"
+    tag "subworkflows/msa_structural_alignment"
+    tag "subworkflows/../../modules/nf-core/foldmason/easymsa"
+    tag "subworkflows/../../modules/nf-core/mtmalign/align"
+
+
+    test("foldmason/easymsa") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test_tree' ], [file(params.modules_testdata_base_path + 'proteomics/pdb/1tim.pdb', checkIfExists: true), file(params.modules_testdata_base_path + 'proteomics/pdb/8tim.pdb', checkIfExists: true)], 'foldmason_easymsa'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("foldmason/easymsa") },
+            )
+        }
+    }
+
+    test("mtmalign/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test_tree' ], [file(params.modules_testdata_base_path + 'proteomics/pdb/1tim.pdb', checkIfExists: true), file(params.modules_testdata_base_path + 'proteomics/pdb/8tim.pdb', checkIfExists: true)], 'mtmalign_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("mtmalign/align") },
+            )
+        }
+    }
+
+
+}

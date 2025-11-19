@@ -1,39 +1,38 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/mirpedrol/class-modules/main/subworkflows/yaml-schema.json
-name: "msa_guidetree"
-description: Compute a guide tree for multiple sequence alignment
-keywords: ["align", "guide tree", "guidetree", "msa"]
+name: "msa_structural_alignment"
+description: Perform multiple sequence alignment of protein structures
+keywords: ["alignment", "msa", "structure"]
 components:
-  - clustalo/guidetree:
+  - foldmason/easymsa:
       git_remote: "https://github.com/nf-core/modules.git"
-  - famsa/guidetree:
-      git_remote: "https://github.com/nf-core/modules.git"
-  - magus/guidetree:
+  - mtmalign/align:
       git_remote: "https://github.com/nf-core/modules.git"
 
 input:
-  - ch_fasta:
-      description: "Channel containing: meta, fasta"
+  - ch_pdbs:
+      description: "Channel containing: meta, pdbs"
       structure:
         - meta:
             description: "Groovy Map containing sample information
 
-              e.g. `[ id:'test']`
+              e.g. `[ id:'sample1' ]`
 
               "
             type: map
-        - fasta:
-            description: Input sequences in FASTA format
+        - pdbs:
+            description: Input protein structures in PDB format.
             ontologies:
-              - edam: http://edamontology.org/format_1929
-            pattern: "*.{fa,fasta}"
+              - edam: http://edamontology.org/format_1476
+              - edam: http://edamontology.org/format_1477
+            pattern: "*.{pdb,mmcif}"
             type: file
         - tool:
             description: The name of the tool to run
             type: string
 
 output:
-  - tree:
-      description: Output channel tree
+  - alignment:
+      description: Output channel alignment
       structure:
         - - meta:
               description: "Groovy Map containing sample information
@@ -42,11 +41,11 @@ output:
 
                 "
               type: map
-          - "*.dnd":
-              description: Guide tree file in Newick format
+          - ${prefix}.aln.gz:
+              description: Alignment in FASTA format. May be gzipped or uncompressed.
               ontologies:
-                - edam: http://edamontology.org/format_2006
-              pattern: "*.{dnd}"
+                - edam: http://edamontology.org/format_1984
+              pattern: "*.{aln.gz,aln,fa,fa.gz,fasta,fasta.gz}"
               type: file
   - versions:
       description: Output channel versions

@@ -3,100 +3,26 @@
     "homePage": "https://github.com/nf-core/multiplesequencealign",
     "repos": {
         "https://github.com/mirpedrol/class-modules.git": {
-            "modules": {
-                "mirpedrol": {
-                    "clustalo/align": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "clustalo/guidetree": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_guidetree"]
-                    },
-                    "clustalo/treealign": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_treealign"]
-                    },
-                    "famsa/align": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "famsa/guidetree": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_guidetree"]
-                    },
-                    "famsa/treealign": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_treealign"]
-                    },
-                    "kalign/align": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "learnmsa/align": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "mafft": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "magus/align": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "magus/guidetree": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_guidetree"]
-                    },
-                    "magus/treealign": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_treealign"]
-                    },
-                    "muscle5/super5": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "tcoffee/align": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_alignment"]
-                    },
-                    "tcoffee/treealign": {
-                        "branch": "main",
-                        "git_sha": "82876573667a4b4536c590e1f757094cfc8bed3e",
-                        "installed_by": ["msa_treealign"]
-                    }
-                }
-            },
             "subworkflows": {
                 "mirpedrol": {
                     "msa_alignment": {
                         "branch": "main",
-                        "git_sha": "e249a43bef30684f31d2628035bb61b3cfcf5a73",
+                        "git_sha": "caf40830bd920d881a6b1a553b3140c422f3952f",
                         "installed_by": ["subworkflows"]
                     },
                     "msa_guidetree": {
                         "branch": "main",
-                        "git_sha": "e249a43bef30684f31d2628035bb61b3cfcf5a73",
+                        "git_sha": "d59da459719d7a2df943a98b129a587e7c4bc7ed",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "msa_structural_alignment": {
+                        "branch": "main",
+                        "git_sha": "4dc4da3795b6910ab508171843c33779f59f63fc",
                         "installed_by": ["subworkflows"]
                     },
                     "msa_treealign": {
                         "branch": "main",
-                        "git_sha": "e249a43bef30684f31d2628035bb61b3cfcf5a73",
+                        "git_sha": "4dc4da3795b6910ab508171843c33779f59f63fc",
                         "installed_by": ["subworkflows"]
                     }
                 }
@@ -108,12 +34,12 @@
                     "clustalo/align": {
                         "branch": "master",
                         "git_sha": "7b32b09fe7787c0fc6924e7b6f223a0b1daf0d2f",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_alignment", "msa_treealign"]
                     },
                     "clustalo/guidetree": {
                         "branch": "master",
                         "git_sha": "dc94b6ee04a05ddb9f7ae050712ff30a13149164",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_guidetree"]
                     },
                     "csvtk/concat": {
                         "branch": "master",
@@ -129,12 +55,12 @@
                     "famsa/align": {
                         "branch": "master",
                         "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_alignment", "msa_treealign"]
                     },
                     "famsa/guidetree": {
                         "branch": "master",
                         "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_guidetree"]
                     },
                     "fastavalidator": {
                         "branch": "master",
@@ -154,7 +80,7 @@
                     "foldmason/easymsa": {
                         "branch": "master",
                         "git_sha": "0270c0fbbbb09456d7823605e4285c4a2c5bbf40",
-                        "installed_by": ["modules"],
+                        "installed_by": ["modules", "msa_structural_alignment"],
                         "patch": "modules/nf-core/foldmason/easymsa/foldmason-easymsa.diff"
                     },
                     "foldmason/msa2lddtreport": {
@@ -165,13 +91,13 @@
                     "kalign/align": {
                         "branch": "master",
                         "git_sha": "cadb9bbfe56001ac421e0ee87808b0ccc754593a",
-                        "installed_by": ["modules"],
+                        "installed_by": ["modules", "msa_alignment"],
                         "patch": "modules/nf-core/kalign/align/kalign-align.diff"
                     },
                     "learnmsa/align": {
                         "branch": "master",
                         "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_alignment"]
                     },
                     "mafft/align": {
                         "branch": "master",
@@ -186,12 +112,17 @@
                     "magus/align": {
                         "branch": "master",
                         "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_alignment", "msa_treealign"]
+                    },
+                    "magus/guidetree": {
+                        "branch": "master",
+                        "git_sha": "e753770db613ce014b3c4bc94f6cba443427b726",
+                        "installed_by": ["msa_guidetree"]
                     },
                     "mtmalign/align": {
                         "branch": "master",
                         "git_sha": "4eecd9a0c06fa508ae314c06ac952c161c019679",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_structural_alignment"]
                     },
                     "multiqc": {
                         "branch": "master",
@@ -201,7 +132,7 @@
                     "muscle5/super5": {
                         "branch": "master",
                         "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_alignment"]
                     },
                     "pigz/compress": {
                         "branch": "master",
@@ -216,7 +147,7 @@
                     "tcoffee/align": {
                         "branch": "master",
                         "git_sha": "3e548877f25a5980a177cc4f81d2d2e8c24164ef",
-                        "installed_by": ["modules"]
+                        "installed_by": ["modules", "msa_alignment", "msa_treealign"]
                     },
                     "tcoffee/alncompare": {
                         "branch": "master",
