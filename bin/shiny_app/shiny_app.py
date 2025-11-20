@@ -7,12 +7,15 @@ import plotly.express as px
 from pathlib import Path
 import sys
 import os
-
+import plotly.express as px
+from scipy.cluster.hierarchy import linkage, leaves_list
 
 # Load file
 # ----------------------------------------------------------------------------
 summary_report = "./complete_summary_stats_eval_times.csv"
 
+
+# Read in the input CSV
 try:
     inputfile = pd.read_csv(summary_report)
 except:
@@ -21,21 +24,23 @@ except:
 
 
 
+
 def merge_tree_args(row):
     if str(row["tree"]) == "DEFAULT":
-        return "None"
-    elif str(row["args_guidetree"]) == "default":
-        return str(row["tree"]) + " ()"
+        return "DEFAULT"
+    elif str(row["args_guidetree_clean"]) == "default":
+        return str(row["guidetree"]) + " (default)"
+    elif pd.isna(row["args_guidetree_clean"]):
+        return str(row["guidetree"]) + " (default)"
     else:
-        return str(row["tree"]) + " (" + str(row["args_guidetree"]) + ")"
+        return str(row["guidetree"]) + " (" + str(row["args_guidetree"]) + ")"
 
 inputfile["tree_args"] = inputfile.apply(merge_tree_args, axis=1)
 
+
 def merge_aligner_args(row):
-    if str(row["aligner"]) == "nan":
-        return "None"
-    elif str(row["args_aligner"]) == "default":
-        return str(row["aligner"]) + " ()"
+    if str(row["args_aligner_clean"]) == "default":
+        return str(row["aligner"]) + " (default)"
     else:
         return str(row["aligner"]) + " (" + str(row["args_aligner"]) + ")"
 
@@ -46,7 +51,8 @@ inputfile["aligner_args"] = inputfile.apply(merge_aligner_args, axis=1)
 
 options = {item: item for item in list(inputfile.columns)}
 
-options_color = {"aligner": "Assembly",
+options_color = { "id": "Dataset ID",
+                "aligner": "Assembly",
                 "aligner_args": "Assembly with args",
                 "tree": "Tree",
                 "tree_args": "Tree with args"}
@@ -55,16 +61,14 @@ options_eval_all = {
     "sp": "Sum of Pairs (SP)",
     "n_sequences": "Number of Sequences",
     "tc": "Total Column Score (TC)",
+    "total_gaps": "Total Gaps",
     "perc_sim": "Average Sequence Similarity (%)",
     "seqlength_mean": "Mean Sequence Length",
-    "time_tree": "Tree Building Time (min)",
-    "time_align": "Alignment Time (min)",
-    "memory_tree": "Tree Building Memory (GB)",
-    "memory_align": "Alignment Memory (GB)",
+    "realtime_tree": "Tree Building Time (min)",
+    "realtime_aligner": "Alignment Time (min)",
+    "rss_tree": "Tree Building Memory (GB)",
+    "rss_aligner": "Alignment Memory (GB)",
     "plddt": "Average pLDDT",
-    "EVALUATED": "Evaluated iRMSD",
-    "APDB": "APDB",
-    "iRMSD": "iRMSD",
     "NiRMSD": "NiRMSD",
     "aligner": "Assembly",
     "aligner_args": "Assembly with args",
@@ -95,7 +99,7 @@ xlims = {
     "tc": [0, 100],
     "perc_sim": [0, 100],
     "tcs": [0, 1000],
-    "plddt": [0, 100]
+    "plddt": [0, 1]
 }
 
 app_ui = ui.page_fluid(
@@ -304,6 +308,7 @@ def server(input, output, session):
             template = input.theme(),
             xaxis_title = options_eval.get(x, x),
             yaxis_title = options_eval.get(y, y),
+            legend_title_text = options_eval.get(color, color),
             xaxis = dict(range = xlims.get(x, [0, None])),
             yaxis = dict(range = xlims.get(y, [0, None])),
             autosize = True
@@ -317,13 +322,26 @@ def server(input, output, session):
 
     @output
     @render_widget
+
     def corr():
         data = inputfile[list(set(options_eval.keys()) & set(inputfile.columns) - set(vars_cat))]
-        corr = data.corr().fillna(0)
-        xlabs = [options_eval.get(x, x) for x in corr.columns]
-        ylabs = [options_eval.get(y, y) for y in corr.index]
 
-        fig = px.imshow(corr,
+        # If the column contain any missing values, exclude it from the correlation matrix
+        data = data.dropna(axis=1)
+
+        corr = data.corr()
+
+        # Perform hierarchical clustering
+        linkage_matrix = linkage(corr, method='ward')
+        cluster_order = leaves_list(linkage_matrix)
+
+        # Reorder the correlation matrix
+        reordered_corr = corr.iloc[cluster_order, cluster_order]
+
+        xlabs = [options_eval.get(x, x) for x in reordered_corr.columns]
+        ylabs = [options_eval.get(y, y) for y in reordered_corr.index]
+
+        fig = px.imshow(reordered_corr,
                         x = xlabs,
                         y = ylabs,
                         text_auto = ".2f",
@@ -335,7 +353,7 @@ def server(input, output, session):
         )
 
         fig.update_xaxes(automargin = True,
-                         showticklabels = False)
+                        showticklabels = False)
         fig.update_yaxes(automargin = True)
 
         return fig

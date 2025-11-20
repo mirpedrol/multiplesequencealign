@@ -1,6 +1,8 @@
 # Extending nf-core/multiplesequencealign
 
-This pipeline is extensible, allowing the incorporation of new methods for assembling MSAs, guide trees, and evaluating MSAs. Before adding a component, a Nextflow module must be created. Typically, it's best to create an nf-core module, but for specific cases or testing, a local module may be more suitable. Even for local modules, following nf-core conventions is recommended. Some useful resources for this process are listed below:
+This pipeline is extensible, allowing the incorporation of new methods for assembling MSAs, guide trees, and evaluating MSAs.
+
+Before adding a component, a Nextflow module must be created. Typically, it's best to create an nf-core module, but for specific cases or testing, a local module may be more suitable. Even for local modules, following nf-core conventions is recommended. Some useful resources for this process are listed below:
 
 - The [nf-core documentation](https://nf-co.re/docs/usage/tutorials/nf_core_usage_tutorial)
 - The [Nextflow documentation](https://www.nextflow.io/docs/latest/module.html) for modules
@@ -34,6 +36,7 @@ These steps will guide you to include a new MSA tool into the pipeline. Once don
   - [ ] Update docs/usage.md
   - [ ] Update CITATIONS.md
   - [ ] Update CHANGELOG.md
+  - [ ] Update assets/schema_tools.json and include the tool in the list of allowed options
   - [ ] Update citations in utils subworkflow, [here](https://github.com/nf-core/multiplesequencealign/blob/dev/subworkflows/local/utils_nfcore_multiplesequencealign_pipeline/main.nf)
 
 - [ ] **5.** Add your tool in the **toolsheet** in the test dataset repository. [Example](https://github.com/nf-core/test-datasets/pull/1324).
