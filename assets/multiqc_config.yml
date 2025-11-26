@@ -119,11 +119,11 @@ custom_table_header_config:
       hidden: false
       namespace: "Alignment"
       scale: "Paired"
-    args_tree:
+    args_guidetree:
       description: "Arguments used to build the tree."
       hidden: true
       namespace: "Alignment"
-    args_tree_clean:
+    args_guidetree_clean:
       description: "Arguments used to build the tree."
       hidden: true
       namespace: "Alignment"
@@ -145,7 +145,7 @@ table_columns_placement:
   summary_stats:
     fasta: 90
     tree: 150
-    args_tree: 170
+    args_guidetree: 170
     aligner: 200
     args_aligner: 220
     n_sequences: 250

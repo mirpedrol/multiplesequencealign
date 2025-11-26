@@ -1,0 +1,93 @@
+nextflow_workflow {
+
+    name "Test Subworkflow MSA_TREEALIGN"
+    script "../main.nf"
+    workflow "MSA_TREEALIGN"
+
+    tag "subworkflows"
+    tag "subworkflows_mirpedrol"
+    tag "subworkflows/msa_treealign"
+    tag "subworkflows/../../modules/nf-core/clustalo/align"
+    tag "subworkflows/../../modules/nf-core/famsa/align"
+    tag "subworkflows/../../modules/nf-core/magus/align"
+    tag "subworkflows/../../modules/nf-core/tcoffee/align"
+
+
+    test("clustalo/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'clustalo_align'] )
+                input[1] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.dnd', checkIfExists: true), 'clustalo_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("clustalo/align") },
+            )
+        }
+    }
+
+    test("famsa/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'famsa_align'] )
+                input[1] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.dnd', checkIfExists: true), 'famsa_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("famsa/align") },
+            )
+        }
+    }
+
+    test("magus/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'magus_align'] )
+                input[1] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.dnd', checkIfExists: true), 'magus_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("magus/align") },
+            )
+        }
+    }
+
+    test("tcoffee/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'tcoffee_align'] )
+                input[1] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.dnd', checkIfExists: true), 'tcoffee_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("tcoffee/align") },
+            )
+        }
+    }
+
+
+}

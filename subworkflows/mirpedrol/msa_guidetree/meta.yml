@@ -1,0 +1,64 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mirpedrol/class-modules/main/subworkflows/yaml-schema.json
+name: "msa_guidetree"
+description: Compute a guide tree for multiple sequence alignment
+keywords: ["align", "guide tree", "guidetree", "msa"]
+components:
+  - clustalo/guidetree:
+      git_remote: "https://github.com/nf-core/modules.git"
+  - famsa/guidetree:
+      git_remote: "https://github.com/nf-core/modules.git"
+  - magus/guidetree:
+      git_remote: "https://github.com/nf-core/modules.git"
+
+input:
+  - ch_fasta:
+      description: "Channel containing: meta, fasta"
+      structure:
+        - meta:
+            description: "Groovy Map containing sample information
+
+              e.g. `[ id:'test']`
+
+              "
+            type: map
+        - fasta:
+            description: Input sequences in FASTA format
+            ontologies:
+              - edam: http://edamontology.org/format_1929
+            pattern: "*.{fa,fasta}"
+            type: file
+        - tool:
+            description: The name of the tool to run
+            type: string
+
+output:
+  - tree:
+      description: Output channel tree
+      structure:
+        - - meta:
+              description: "Groovy Map containing sample information
+
+                e.g. `[ id:'test']`
+
+                "
+              type: map
+          - "*.dnd":
+              description: Guide tree file in Newick format
+              ontologies:
+                - edam: http://edamontology.org/format_2006
+              pattern: "*.{dnd}"
+              type: file
+  - versions:
+      description: Output channel versions
+      structure:
+        - versions.yml:
+            description: File containing software versions
+            ontologies:
+              - edam: http://edamontology.org/format_3750
+            pattern: versions.yml
+            type: file
+
+authors:
+  - "@mirpedrol"
+maintainers:
+  - "@mirpedrol"

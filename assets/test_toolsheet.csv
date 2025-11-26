@@ -1,0 +1,10 @@
+guidetree,args_guidetree,treealign,args_treealign,alignment,args_alignment
+,,,,clustalo_align,
+,,,,famsa_align,
+,,,,kalign_align,
+,,,,learnmsa_align,
+,,,,magus_align,
+,,,,muscle5_super5,
+,,,,tcoffee_align,
+famsa_guidetree,-gt upgma -medoidtree,famsa_align,
+famsa_guidetree,,magus_align,

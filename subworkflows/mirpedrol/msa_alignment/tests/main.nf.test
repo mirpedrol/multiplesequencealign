@@ -1,0 +1,153 @@
+nextflow_workflow {
+
+    name "Test Subworkflow MSA_ALIGNMENT"
+    script "../main.nf"
+    workflow "MSA_ALIGNMENT"
+
+    tag "subworkflows"
+    tag "subworkflows_mirpedrol"
+    tag "subworkflows/msa_alignment"
+    tag "subworkflows/../../modules/nf-core/clustalo/align"
+    tag "subworkflows/../../modules/nf-core/famsa/align"
+    tag "subworkflows/../../modules/nf-core/kalign/align"
+    tag "subworkflows/../../modules/nf-core/learnmsa/align"
+    tag "subworkflows/../../modules/nf-core/magus/align"
+    tag "subworkflows/../../modules/nf-core/muscle5/super5"
+    tag "subworkflows/../../modules/nf-core/tcoffee/align"
+
+    config './nextflow.config'
+
+    test("clustalo/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'clustalo_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("clustalo/align") },
+            )
+        }
+    }
+
+    test("famsa/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'famsa_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("famsa/align") },
+            )
+        }
+    }
+
+    test("kalign/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'kalign_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("kalign/align") },
+            )
+        }
+    }
+
+    test("learnmsa/align - stub") {
+        options "-stub"
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'learnmsa_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("learnmsa/align - stub") },
+            )
+        }
+    }
+
+    test("magus/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'magus_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert path(workflow.out.alignment[0][1]).getText().contains("1atx") },
+                { assert path(workflow.out.alignment[0][1]).getText().contains("1bds") },
+                { assert path(workflow.out.alignment[0][1]).getText().contains("1sh1") },
+                { assert path(workflow.out.alignment[0][1]).getText().contains("1apf") },
+                { assert path(workflow.out.alignment[0][1]).getText().contains("1ahl") },
+                { assert snapshot(workflow.out.versions).match("magus/align") },
+            )
+        }
+    }
+
+    test("muscle5/super5") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'muscle5_super5'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("muscle5/super5") },
+            )
+        }
+    }
+
+    test("tcoffee/align") {
+
+        when {
+            workflow {
+                """
+                input[0] = Channel.of( [[ id:'test' ], file(params.modules_testdata_base_path + 'genomics/eukaryotes/anemonia_sulcata/seatoxin-ref.aln', checkIfExists: true), 'tcoffee_align'] )
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert snapshot(workflow.out).match("tcoffee/align") },
+            )
+        }
+    }
+
+
+}

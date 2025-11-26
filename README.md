@@ -138,7 +138,7 @@ nextflow run nf-core/multiplesequencealign \
 
 <details>
   <summary> FAQ: Can I specify the arguments of the tools (tree and aligner)? </summary>
-  Yes, use the <code>--args_tree</code> and <code>--args_aligner</code> flags. More info: <a href="https://nf-co.re/multiplesequencealign/usage">usage</a> and <a href="https://nf-co.re/multiplesequencealign/parameters">parameters</a>.
+  Yes, use the <code>--args_guidetree</code> and <code>--args_aligner</code> flags. More info: <a href="https://nf-co.re/multiplesequencealign/usage">usage</a> and <a href="https://nf-co.re/multiplesequencealign/parameters">parameters</a>.
 </details>
 
 ### CASE 2: Multiple datasets, multiple tools.
@@ -191,12 +191,12 @@ Please check: <a href="https://nf-co.re/multiplesequencealign/usage/#samplesheet
 
 Each line defines a combination of guide tree and multiple sequence aligner to run with the respective arguments to be used.
 
-The only required field is `aligner`. The fields `tree`, `args_tree` and `args_aligner` are optional and can be left empty.
+The only required field is `aligner`. The fields `tree`, `args_guidetree` and `args_aligner` are optional and can be left empty.
 
 A minimal version:
 
 ```csv
-tree,args_tree,aligner,args_aligner
+tree,args_guidetree,aligner,args_aligner
 ,,FAMSA,
 ```
 
@@ -205,7 +205,7 @@ This will run the FAMSA aligner.
 A more complex one:
 
 ```csv
-tree,args_tree,aligner,args_aligner
+tree,args_guidetree,aligner,args_aligner,
 FAMSA, -gt upgma -medoidtree, FAMSA,
 , ,TCOFFEE,
 FAMSA,,REGRESSIVE,

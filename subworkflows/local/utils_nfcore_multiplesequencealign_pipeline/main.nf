@@ -92,7 +92,7 @@ workflow PIPELINE_INITIALISATION {
 
     if (params.aligner){
         ch_tools = Channel.fromList([
-            [["aligner": params.aligner, "tree": params.tree, "args_tree": params.args_tree, "args_aligner": params.args_aligner]]
+            [["aligner": params.aligner, "tree": params.tree, "args_guidetree": params.args_guidetree, "args_aligner": params.args_aligner]]
         ])
     }else{
 
@@ -105,13 +105,17 @@ workflow PIPELINE_INITIALISATION {
                     def tree_map = [:]
                     def align_map = [:]
 
-                    tree_map["tree"] = Utils.clean_tree(meta_clone["tree"].toString())
-                    tree_map["args_tree"] = meta_clone["args_tree"]
-                    tree_map["args_tree_clean"] = Utils.cleanArgs(meta_clone.args_tree)
+                        tree_map["guidetree"] = Utils.clean_tree(meta_clone["guidetree"])
+                        tree_map["args_guidetree"] = meta_clone["args_guidetree"]
+                        tree_map["args_guidetree_clean"] = Utils.cleanArgs(meta_clone.args_guidetree)
 
-                    align_map["aligner"] = meta_clone["aligner"].toString()
-                    align_map["args_aligner"] = Utils.check_required_args(meta_clone["aligner"], meta_clone["args_aligner"])
-                    align_map["args_aligner_clean"] = Utils.cleanArgs(meta_clone.args_aligner)
+                        tree_map["treealign"] = Utils.clean_tree(meta_clone["treealign"])
+                        tree_map["args_treealign"] = meta_clone["args_treealign"]
+                        tree_map["args_treealign_clean"] = Utils.cleanArgs(meta_clone.args_treealign)
+
+                        align_map["alignment"] = meta_clone["alignment"]
+                        align_map["args_alignment"] = Utils.check_required_args(meta_clone["alignment"], meta_clone["args_alignment"])
+                        align_map["args_alignment_clean"] = Utils.cleanArgs(meta_clone.args_alignment)
 
                     [ tree_map, align_map ]
             }.unique()
@@ -188,11 +192,11 @@ workflow PIPELINE_COMPLETION {
         // Output file naming
         def summary_file_with_traces = "${outdir}/summary/complete_summary_stats_eval_times.csv"
 
-        if (!skip_shiny) {
-            merge_summary_and_traces(summary_file, trace_dir_path, versions_path, summary_file_with_traces, "${shiny_dir_path}/complete_summary_stats_eval_times.csv")
-        }else{
-            merge_summary_and_traces(summary_file, trace_dir_path, versions_path, summary_file_with_traces, "")
-        }
+        //if (!skip_shiny) {
+        //    merge_summary_and_traces(summary_file, trace_dir_path, versions_path, summary_file_with_traces, "${shiny_dir_path}/complete_summary_stats_eval_times.csv")
+        //}else{
+        //    merge_summary_and_traces(summary_file, trace_dir_path, versions_path, summary_file_with_traces, "")
+        //}
     }
 
     workflow.onError {
@@ -575,7 +579,7 @@ def processTraceFile(String traceDirPath) {
     keys_to_add = keys - ["id", "tree", "args", "aligner"]
     keys_to_add.each { key -> empty_trace[key+"_tree"] = null }
     empty_trace["tree"] = "DEFAULT"
-    empty_trace["args_tree_clean"] = "default"
+    empty_trace["args_guidetree_clean"] = "default"
     traceTrees.add(empty_trace)
 
     // Return the extracted traces as a map
@@ -614,14 +618,14 @@ def prepTrace(trace, suffix_to_replace, subworkflow, keys) {
             newRow.tree = treeMatch ? treeMatch[0][1] : "DEFAULT"
 
             def treeArgsMatch = (row.tag =~ /argstree: (.*)/)
-            newRow.args_tree_clean = treeArgsMatch ? Utils.cleanArgs(treeArgsMatch[0][1]) : "default"
+            newRow.args_guidetree_clean = treeArgsMatch ? Utils.cleanArgs(treeArgsMatch[0][1]) : "default"
 
-            // remove tree and args_tree from keys
-            keys_iterator = keys - ["tree", "args_tree_clean"]
+            // remove tree and args_guidetree from keys
+            keys_iterator = keys - ["guidetree", "args_guidetree_clean"]
 
         } else if(subworkflow == "COMPUTE_TREES") {
-            suffix = "_tree"
-            specific_key = "tree"
+            suffix = "_guidetree"
+            specific_key = "guidetree"
         }
 
 
@@ -747,12 +751,12 @@ def merge_summary_and_traces(summary_file, trace_dir_path, versions_path, outFil
 
         def treeMatch = [:]
         if(row.tree == "DEFAULT"){
-            treeMatch = trace_file.traceTrees.find {it.tree == row.tree && it.args_tree_clean == row.args_tree_clean}
+            treeMatch = trace_file.traceTrees.find {it.tree == row.tree && it.args_guidetree_clean == row.args_guidetree_clean}
         } else {
-            treeMatch = trace_file.traceTrees.find { it.id == row.id && it.tree == row.tree && it.args_tree_clean == row.args_tree_clean}
+            treeMatch = trace_file.traceTrees.find { it.id == row.id && it.tree == row.tree && it.args_guidetree_clean == row.args_guidetree_clean}
         }
 
-        def alignMatch = trace_file.traceAlign.find { it.id == row.id && it.tree == row.tree && row.args_tree_clean == it.args_tree_clean && it.aligner == row.aligner && it.args_aligner_clean == row.args_aligner_clean}
+        def alignMatch = trace_file.traceAlign.find { it.id == row.id && it.tree == row.tree && row.args_guidetree_clean == it.args_guidetree_clean && it.aligner == row.aligner && it.args_aligner_clean == row.args_aligner_clean}
         def mergedRow = row + (treeMatch ?: [:]) + (alignMatch ?: [:])
         mergedData << mergedRow
     }

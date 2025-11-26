@@ -7,46 +7,63 @@
     "items": {
         "type": "object",
         "properties": {
-            "tree": {
+            "guidetree": {
                 "type": "string",
                 "pattern": "^\\S+$",
-                "errorMessage": "tree name cannot contain spaces and must be a string",
-                "meta": ["tree"],
+                "errorMessage": "tree name cannot contain spaces",
+                "meta": ["guidetree"],
+                "default": "",
+                "enum": [
+                    "clustalo_guidetree",
+                    "famsa_guidetree",
+                    "magus_guidetree"
+                ]
+            },
+            "args_guidetree": {
+                "type": "string",
+                "meta": ["args_guidetree"],
                 "default": ""
             },
-            "args_tree": {
+            "treealign": {
                 "type": "string",
-                "meta": ["args_tree"],
+                "meta": ["treealign"],
+                "pattern": "^\\S+$",
+                "errorMessage": "align name must be provided and cannot contain spaces",
+                "default": "",
+                "enum":[
+                    "clustalo_align",
+                    "famsa_align",
+                    "magus_align",
+                    "tcoffee_align"
+                ]
+            },
+            "args_treealign": {
+                "type": "string",
+                "meta": ["args_treealign"],
                 "default": ""
             },
-            "aligner": {
+            "alignment": {
                 "type": "string",
-                "meta": ["aligner"],
+                "meta": ["alignment"],
                 "pattern": "^\\S+$",
                 "enum": [
-                    "CLUSTALO",
-                    "FAMSA",
-                    "KALIGN",
-                    "LEARNMSA",
-                    "MAFFT",
-                    "MAGUS",
-                    "MUSCLE5",
-                    "TCOFFEE",
-                    "REGRESSIVE",
-                    "UPP",
-                    "3DCOFFEE",
-                    "MTMALIGN",
-                    "FOLDMASON"
+                    "clustalo_align",
+                    "famsa_align",
+                    "kalign_align",
+                    "learnmsa_align",
+                    "magus_align",
+                    "muscle5_super5",
+                    "tcoffee_align"
                 ],
-                "errorMessage": "align name must be provided, has to be a string, cannot contain spaces and must be one of: CLUSTALO, FAMSA, KALIGN, LEARNMSA, MAFFT, MAGUS, MUSCLES, TCOFFEE, REGRESSIVE, UPP, 3DCOFFE, MTMALIGN or FOLDMASON",
+                "errorMessage": "align name must be provided, has to be a string, cannot contain spaces and must be one of the valid options.",
                 "default": ""
             },
-            "args_aligner": {
+            "args_alignment": {
                 "type": "string",
-                "meta": ["args_aligner"],
+                "meta": ["args_alignment"],
                 "default": ""
             }
         },
-        "required": ["aligner"]
+        "oneOf": [{ "required": ["alignment"] }, { "required": ["guidetree", "treealign"] }]
     }
 }

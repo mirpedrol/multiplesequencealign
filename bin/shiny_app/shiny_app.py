@@ -28,12 +28,12 @@ except:
 def merge_tree_args(row):
     if str(row["tree"]) == "DEFAULT":
         return "DEFAULT"
-    elif str(row["args_tree_clean"]) == "default":
-        return str(row["tree"]) + " (default)"
-    elif pd.isna(row["args_tree_clean"]):
-        return str(row["tree"]) + " (default)"
+    elif str(row["args_guidetree_clean"]) == "default":
+        return str(row["guidetree"]) + " (default)"
+    elif pd.isna(row["args_guidetree_clean"]):
+        return str(row["guidetree"]) + " (default)"
     else:
-        return str(row["tree"]) + " (" + str(row["args_tree"]) + ")"
+        return str(row["guidetree"]) + " (" + str(row["args_guidetree"]) + ")"
 
 inputfile["tree_args"] = inputfile.apply(merge_tree_args, axis=1)
 
